@@ -87,7 +87,7 @@ def extractCorrectSet(correctDataFile, attemptDataFile, attemptStudentSet, corre
 def oneHotCorrectAttemptedNotAttempted(numProblems, problemID, allStudentSet, attemptStudentSet, correctStudentSet, mapColumnIndexToStudentID, verbose=False):
   print 'Extracting one-hot encoding: Correct / Attempted but Wrong / Not Attempted'
   numStudents = len(allStudentSet)
-  encodings = np.zeros((numStudents, numProblems*3))
+  encodings = np.zeros((numStudents, numProblems*3), dtype=np.int)
   row_index = 0
   for studentID in allStudentSet:
     mapColumnIndexToStudentID[row_index] = studentID
@@ -149,6 +149,12 @@ if __name__ == '__main__':
   correctStudentSet = set()
 
   extractCorrectSet(CORRECT_DATA_FILE, ATTEMPT_DATA_FILE, attemptStudentSet, correctStudentSet, VERBOSE_FLAG)
+
   generateStudentIDs(NUM_STUDENTS, allStudentSet, attemptStudentSet, correctStudentSet, MAX_NUMBER_STUDENTS, VERBOSE_FLAG)
   encoding = oneHotCorrectAttemptedNotAttempted(NUM_PROBLEMS, PROBLEM_ID, allStudentSet, attemptStudentSet, correctStudentSet, mapColumnIndexToStudentID, VERBOSE_FLAG)
+
+  print 'Saving X vector for correct/wrong (first 20 columns) for students (only looking at 1 problem)'
+  slice = encoding[:4000,:20].astype(int)
+  print 'slice: ', slice.shape
+  np.savetxt("data/code-org-problem4.csv", slice, fmt="%u", delimiter=',')
 
