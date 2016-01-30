@@ -27,6 +27,10 @@
 *.sqlite
 *.pyc
 
+# Data #
+########
+data
+
 # OS generated files #
 ######################
 .DS_Store
@@ -36,3 +40,7 @@
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Other #
+#########
+studentSimulator
