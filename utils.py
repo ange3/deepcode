@@ -46,3 +46,5 @@ def vectorize_syn_data(data_raw, num_timesteps):
             y[i,t] = p + 1
     corr = np.copy(data_raw) # Correctness indicates which problem a student has answered correctly
     return X, y, corr
+
+
