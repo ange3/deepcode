@@ -6,7 +6,9 @@
 # @created: Feb 04 2016
 #
 #==============================================================================
-# DESCRIPTION:
+# DESCRIPTION: Allows us to extract the student IDs of students who answered 
+#   each problem correctly and students who answered incorrectly
+#   Saves info for every problem in CSV files and saves overall stats in info.txt
 # 
 #==============================================================================
 # CURRENT STATUS: Not modularized into separate functions yet.
