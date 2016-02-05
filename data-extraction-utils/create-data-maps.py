@@ -21,8 +21,8 @@ import numpy as np
 import csv, pickle
 
 DATA_FOLDER = '/Volumes/ANGELA SY/From Chris - senior project knowledge tracing/hoc1-9'
-START_AT_NUM_PROBLEM = 2
-END_AT_NUM_PROBLEM = 2
+START_AT_NUM_PROBLEM = 9
+END_AT_NUM_PROBLEM = 9
 
 
 # Helper function that extracts {trajectory ID: final AST ID}
