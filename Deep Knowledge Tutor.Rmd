@@ -1,0 +1,15 @@
+---
+title: "Deep Knowledge Tutor"
+author: "Larry Liu"
+date: "February 5, 2016"
+output: html_document
+---
+
+Notes:
+
+---
+
+```{r, echo=FALSE}
+library('ggplot2')
+library('animation')
+```
