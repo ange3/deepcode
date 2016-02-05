@@ -3,8 +3,7 @@
 #
 # File: visualize.py
 # @Author: Lisa Wang
-# @created: Nov 08 2015
-#
+# @created: Jan 30 2016
 #==============================================================================
 # DESCRIPTION:
 # For plotting and visulizing our data and results.
