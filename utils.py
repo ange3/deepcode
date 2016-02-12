@@ -93,7 +93,7 @@ def vectorize_data(data_raw):
         - next_problem: for each student, indicates which problem the student is solving next. 
                         one hot encoding : shape (num_samples, num_timesteps, num_problems)
         - truth: for each student, indicates whether student answers problem at next time step
-               correctly.
+               correctly. shape(num_samples, num_timesteps)
 
         notice that num_timesteps can be at most num_problems - 1, since we need 
         to predict on the last input, whether student answers next problem correctly.
