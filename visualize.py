@@ -29,12 +29,14 @@ def smoothen_data(data, smooth_window=100):
         smooth.append(np.mean(data[i:len(data)]))
     return smooth
 
-def plot_loss_acc(data_set, losses, accs, lr, rg, ep, num_train):                
+def plot_loss_acc(data_set, losses, train_accs, test_accs, lr, rg, ep, num_train):              
     fig = plt.figure()
     ax1 = fig.add_subplot(111)
-    accs_line, = ax1.plot(xrange(len(accs)), accs, 'b-', label='accuracies')
+    train_accs_line, = ax1.plot(xrange(len(train_accs)), train_accs, 'b-', label='train accuracies')
+    test_accs_line, = ax1.plot(xrange(len(test_accs)), test_accs, 'g-', label='test accuracies')
+
     ax1.set_ylabel('accuracies', color='b')
-    ax1.set_xlabel('iterations')
+    ax1.set_xlabel('epochs')
     for tl in ax1.get_yticklabels():
         tl.set_color('b')
 
@@ -44,7 +46,8 @@ def plot_loss_acc(data_set, losses, accs, lr, rg, ep, num_train):
     for tl in ax2.get_yticklabels():
         tl.set_color('r')
 
-    plt.legend(handles=[losses_line, accs_line],bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=2, mode="expand")
+    plt.legend(handles=[losses_line, train_accs_line, test_accs_line],bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=2, mode="expand")
+
     plt.show()
 
     timestr = time.strftime("%Y%m%d-%H%M%S")

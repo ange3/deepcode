@@ -18,6 +18,42 @@
 ###############################################################################
 
 import numpy as np
+import time
+
+
+
+# ############################# Batch iterator ###############################
+# This is just a simple helper function iterating over training data in
+# mini-batches of a particular size, optionally in random order. It assumes
+# data is available as numpy arrays. For big datasets, you could load numpy
+# arrays as memory-mapped files (np.load(..., mmap_mode='r')), or write your
+# own custom data iteration function. For small datasets, you can also copy
+# them to GPU at once for slightly improved performance. This would involve
+# several changes in the main program, though, and is not demonstrated here.
+# taken from lasagne mnist example.
+
+def iterate_minibatches(X, next_problem, truth, batchsize, shuffle=False):
+    assert(X.shape[0] == truth.shape[0])
+    assert(X.shape[0] == next_problem.shape[0])
+    num_samples = X.shape[0]
+    if shuffle:
+        indices = np.arange(num_samples)
+        np.random.shuffle(indices)
+    for start_idx in range(0, num_samples - batchsize + 1, batchsize):
+        if shuffle:
+            excerpt = indices[start_idx:start_idx + batchsize]
+        else:
+            excerpt = slice(start_idx, start_idx + batchsize)
+        yield X[excerpt], next_problem[excerpt], truth[excerpt]
+
+
+# just a test to make sure that iterate_minibatches works!
+# batchsize = 50
+# for batch in utils.iterate_minibatches(X_train, next_problem_train, truth_train, batchsize, shuffle=False):
+#     X_, next_problem_, truth_  = batch
+#     print X_.shape
+#     print next_problem_.shape
+
 
 # To use on synthetic data set
 def vectorize_syn_data(data_raw, num_timesteps):
