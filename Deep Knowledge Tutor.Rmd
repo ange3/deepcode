@@ -63,49 +63,49 @@ trajHist2
 
 This block processes all trajectories' last AST and the associated score.
 ```{r}
-# #setwd("C:/Users/Larry/Dropbox/Stanford University/2015-2016/Winter Quarter/CS191W/hoc1-9_new/hoc2")
-# filenameBase = "'C:/Users/Larry/Dropbox/Stanford University/2015-2016/Winter Quarter/CS191W/hoc1-9_new/hoc2/trajectories/"
-# 
-# numTrajs = 100
-# 
-# #Create data frame to store trajectory data
-# trajData = data.frame(matrix(NA, nrow=numTrajs, ncol=3))
-# colnames(trajData) = c('trajID', 'lastAST', 'score')
-# 
-# for(trajID in 0:numTrajs){
-#   #File name of the trajectory to open
-#   filename = paste(filenameBase, trajID, ".txt'", sep="")
-#   
-#   #Retrieve the last AST in a given trajectory
-#   lastAST <- as.numeric(system(paste("gawk 'END {print}'", filename, sep=" "), intern = TRUE))
-#   
-#   #Store last AST and score coupled with trajID
-#   trajData[trajID+1,] = c(trajID, lastAST, astScores[astScores$astID == lastAST,]$score)
-# }
-# 
-# #Determine correctness of scores
-# trajData['correct'] = ifelse(trajData['score'] == 100 | trajData['score'] == 20, 1, 0)
-# 
-# trajScorePlot = ggplot(data=trajData, aes(x=trajID, y=score, colour=as.factor(correct))) + geom_point() + labs(title="Trajectory Scores", x="Traj ID", y="Score") + scale_y_continuous(breaks=seq(0,100,10), limits=c(0,100)) + scale_x_continuous() + scale_color_manual(values=c("red", "green"))
-# trajScorePlot
+#setwd("C:/Users/Larry/Dropbox/Stanford University/2015-2016/Winter Quarter/CS191W/hoc1-9_new/hoc2")
+filenameBase = "'C:/Users/Larry/Dropbox/Stanford University/2015-2016/Winter Quarter/CS191W/hoc1-9_new/hoc2/trajectories/"
+
+numTrajs = 100
+
+#Create data frame to store trajectory data
+trajData = data.frame(matrix(NA, nrow=numTrajs, ncol=3))
+colnames(trajData) = c('trajID', 'lastAST', 'score')
+
+for(trajID in 0:numTrajs){
+  #File name of the trajectory to open
+  filename = paste(filenameBase, trajID, ".txt'", sep="")
+  
+  #Retrieve the last AST in a given trajectory
+  lastAST <- as.numeric(system(paste("gawk 'END {print}'", filename, sep=" "), intern = TRUE))
+  
+  #Store last AST and score coupled with trajID
+  trajData[trajID+1,] = c(trajID, lastAST, astScores[astScores$astID == lastAST,]$score)
+}
+
+#Determine correctness of scores
+trajData['correct'] = ifelse(trajData['score'] == 100 | trajData['score'] == 20, 1, 0)
+
+trajScorePlot = ggplot(data=trajData, aes(x=trajID, y=score, colour=as.factor(correct))) + geom_point() + labs(title="Trajectory Scores", x="Traj ID", y="Score") + scale_y_continuous(breaks=seq(0,100,10), limits=c(0,100)) + scale_x_continuous() + scale_color_manual(values=c("red", "green"))
+trajScorePlot
 ```
 
 This block computes the score for each student given their trajectory.
 ```{r}
-# studentTrajs <- as.data.frame(read.table("C:/Users/Larry/Dropbox/Stanford University/2015-2016/Winter Quarter/CS191W/hoc1-9_new/hoc2/trajectories/idMap.txt", sep=",", header=FALSE))
-# colnames(studentTrajs) = c('studentID', 'trajID')
-# 
-# #Add score column
-# for(studentID in studentTrajs$studentID){
-#   currTrajID = studentTrajs[studentTrajs$studentID == studentID,]$trajID
-#   if(currTrajID < numTrajs){
-#     
-#     #index into 1-indexed trajectory data frame
-#     studentTrajs[studentTrajs$studentID == studentID,3] = trajData[currTrajID+1,]$score
-#   }
-# }
-# 
-# colnames(studentTrajs) = c('studentID', 'trajID', 'score')
+studentTrajs <- as.data.frame(read.table("C:/Users/Larry/Dropbox/Stanford University/2015-2016/Winter Quarter/CS191W/hoc1-9_new/hoc2/trajectories/idMap.txt", sep=",", header=FALSE))
+colnames(studentTrajs) = c('studentID', 'trajID')
+
+#Add score column
+for(studentID in studentTrajs[1:10000,]$studentID){
+  currTrajID = studentTrajs[studentTrajs$studentID == studentID,]$trajID
+  if(currTrajID < numTrajs){
+    
+    #index into 1-indexed trajectory data frame
+    studentTrajs[studentTrajs$studentID == studentID,3] = trajData[currTrajID+1,]$score
+  }
+}
+
+colnames(studentTrajs) = c('studentID', 'trajID', 'score')
 ```
 
 This block computes the grade distribution.
@@ -127,8 +127,14 @@ grades = grades[complete.cases(grades),]
 gradesHist = ggplot(data=grades, aes(x=score, y=count)) + geom_bar(stat='identity') + labs(title="Grade Distribution", x="Score", y="Frequency") + scale_y_log10() + scale_x_continuous()
 gradesHist
 
+totalScore = sum(grades$score * grades$count)
+totalCounts = sum(grades$count)
+meanGrade = totalScore/totalCounts
+
 summary(grades)
-
-
+print(paste("Min grade:", min(grades$score)))
+print(paste("Max grade:", max(grades$score)))
+#print(paste("Median grade:", ifelse(grades['score'] == 100 | astScores['score'] == 20, 1, 0)))
+print(paste("Mean grade:", meanGrade))
 
 ```
