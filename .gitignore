@@ -30,6 +30,7 @@
 # Data #
 ########
 data
+processed_data
 
 # OS generated files #
 ######################
