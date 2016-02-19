@@ -45,3 +45,8 @@ Thumbs.db
 # Other #
 #########
 studentSimulator
+
+# DATA #
+########
+processed_data
+*.npy
