@@ -22,8 +22,8 @@ COUNTS_FILENAME_POST = '.txt'
 
 PATH_TO_PROCESSED_DATA = '../processed_data/'
 
-START_PROBLEM_ID = 3
-END_PROBLEM_ID = 7
+START_PROBLEM_ID = 8
+END_PROBLEM_ID = 9
 
 CLIP_TRAJECTORY_LENGTH = 20
 CLIP_TRAJECTORY_WITH_NUM_COUNT_THRESHOLD = 1
@@ -43,7 +43,7 @@ def count_total_asts(hoc_num):
             counts += 1
     return counts
 
-def get_set_of_trajs_to_remove(hoc_num, freq_threshold, verbose = True):
+def get_set_of_trajs_to_remove(hoc_num, freq_threshold, map_traj_to_count, verbose = True):
     '''
     Return set of Trajectory IDs with a count less than or equal to freq_threshold
     Args: hoc_num is the problem number
@@ -62,6 +62,7 @@ def get_set_of_trajs_to_remove(hoc_num, freq_threshold, verbose = True):
     with open(filepath, 'rb') as count_file:
         for index, line in enumerate(count_file):
             traj_id, count = line.split() # tokenize over white space
+            map_traj_to_count[traj_id] = int(count)  # assume each traj_id is only listed once in file
             if int(count) <= freq_threshold:
                 traj_id_to_remove_set.add(traj_id)
 
@@ -69,10 +70,16 @@ def get_set_of_trajs_to_remove(hoc_num, freq_threshold, verbose = True):
         num_original = index
         num_removed = len(traj_id_to_remove_set)
         num_remaining = num_original-num_removed
+
+        num_removed_times_frequency = 0
+        for traj_id in traj_id_to_remove_set:
+            num_removed_times_frequency += map_traj_to_count[traj_id]  # num_removed_times_frequency == num_removed when frequency_threshod = 1 since each traj_id for removal will have only been seen once
+        num_remaining_times_frequency = num_original - num_removed_times_frequency
         print 'Original num trajectories:  {}'.format(num_original)
         print 'Clipped trajectories:  {}'.format(num_removed)
         print 'Remaining trajectories:  {}'.format(num_remaining)
         print 'Percentage trajectories remaining:  {}%'.format(float(num_remaining)/num_original*100)
+        print 'Percentage trajectories remaining weighted by freq: {}%'.format(float(num_remaining_times_frequency)/num_original*100)
     return traj_id_to_remove_set
 
 def extract_asts_for_one_hoc_from_larry_trajectories(hoc_num, verbose = True, save_traj_matrix = True):
@@ -84,7 +91,8 @@ def extract_asts_for_one_hoc_from_larry_trajectories(hoc_num, verbose = True, sa
             num_timesteps = length of the longest trajectory
             num_asts = number of distinct AST IDs in the given trajectories
     '''
-    traj_id_to_remove_set = get_set_of_trajs_to_remove(hoc_num, CLIP_TRAJECTORY_WITH_NUM_COUNT_THRESHOLD)
+    map_traj_to_count = {}
+    traj_id_to_remove_set = get_set_of_trajs_to_remove(hoc_num, CLIP_TRAJECTORY_WITH_NUM_COUNT_THRESHOLD, map_traj_to_count)
     filepath = PATH_TO_LARRY_TRAJECTORIES + LARRY_TRAJECTORIES_FILENAME_PRE + str(hoc_num) + LARRY_TRAJECTORIES_FILENAME_POST
 
     unique_asts_set = set()
@@ -131,12 +139,16 @@ def extract_asts_for_one_hoc_from_larry_trajectories(hoc_num, verbose = True, sa
 
     if verbose:
         num_original = count_total_asts(hoc_num)
-        num_removed = num_original-num_remaining_unique_asts
+        num_remaining_unique_asts_times_traj_frequency = 0
+        # for ast in unique_asts_set:
+        #     num_remaining_unique_asts_times_traj_frequency += map_traj_to_count[] # need traj id not ast id
+        num_removed = num_original-num_remaining_unique_asts_times_traj_frequency
         print '1b) Cleaning ASTs'
         print 'Original num ASTS: {}'.format(num_original)
         print 'Removed ASTS: {}'.format(num_removed)
         print 'Remaining ASTS: {}'.format(num_remaining_unique_asts)
         print 'Percentage ASTs remaining:  {}%'.format(float(num_remaining_unique_asts)/num_original*100)
+        # print 'Percentage ASTs remaining weighted by frequency of trajectory:  {}%'.format(float(num_remaining_unique_asts_times_traj_frequency)/num_original*100) # with weighting by frequency of trajectory
 
         print '2) Extracted Raw Trajectories'
         print 'Longest Trajectory Length: {} # ASTs at Traj ID: {}'.format(longest_trajectory_len, longest_trajectory_id)

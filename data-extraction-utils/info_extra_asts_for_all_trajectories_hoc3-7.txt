@@ -1,3 +1,49 @@
+*** INFO: HOC 1 ***
+1a) Cleaning trajectories
+Get set of trajectories to remove for HOC 1...
+Clip trajectories with count <= 1
+Original num trajectories:  12043
+Clipped trajectories:  10072
+Remaining trajectories:  1971
+Percentage trajectories remaining:  16.3663538985%
+1b) Cleaning ASTs
+Original num ASTS: 12044
+Removed ASTS: 12044
+Remaining ASTS: 194
+Percentage ASTs remaining:  1.61076054467%
+2) Extracted Raw Trajectories
+Longest Trajectory Length: 7 # ASTs at Traj ID: 1952
+Num Trajectories: 1322
+3) Trajectories matrix created and encoded
+Trajectories Matrix shape: (1322, 7, 195)
+INFO: Saving trajectories matrix and AST ID map
+Traj Matrix Filename: ../processed_data/traj_matrix_1.npy
+Map AST ID to Row Index Filename: ../processed_data/map_ast_row_1.pickle
+Finished extracting ASTs from Problem 1 in 0.137942s
+
+*** INFO: HOC 2 ***
+1a) Cleaning trajectories
+Get set of trajectories to remove for HOC 2...
+Clip trajectories with count <= 1
+Original num trajectories:  15576
+Clipped trajectories:  13268
+Remaining trajectories:  2308
+Percentage trajectories remaining:  14.8176682075%
+1b) Cleaning ASTs
+Original num ASTS: 15577
+Removed ASTS: 15577
+Remaining ASTS: 219
+Percentage ASTs remaining:  1.40591898312%
+2) Extracted Raw Trajectories
+Longest Trajectory Length: 8 # ASTs at Traj ID: 1766
+Num Trajectories: 2299
+3) Trajectories matrix created and encoded
+Trajectories Matrix shape: (2299, 8, 220)
+INFO: Saving trajectories matrix and AST ID map
+Traj Matrix Filename: ../processed_data/traj_matrix_2.npy
+Map AST ID to Row Index Filename: ../processed_data/map_ast_row_2.pickle
+Finished extracting ASTs from Problem 2 in 0.181539s
+
 *** INFO: HOC 3 ***
 1a) Cleaning trajectories
 Get set of trajectories to remove for HOC 3...
@@ -116,3 +162,52 @@ INFO: Saving trajectories matrix and AST ID map
 Traj Matrix Filename: ../processed_data/traj_matrix_7.npy
 Map AST ID to Row Index Filename: ../processed_data/map_ast_row_7.pickle
 Finished extracting ASTs from Problem 7 in 0.432568s
+
+*** INFO: HOC 8 ***
+1a) Cleaning trajectories
+Get set of trajectories to remove for HOC 8...
+Clip trajectories with count <= 1
+Original num trajectories:  59411
+Clipped trajectories:  53000
+Remaining trajectories:  6411
+Percentage trajectories remaining:  10.7909309724%
+Percentage trajectories remaining weighted by freq: 10.7909309724%
+1b) Cleaning ASTs
+Original num ASTS: 59412
+Removed ASTS: 59412
+Remaining ASTS: 923
+Percentage ASTs remaining:  1.55355820373%
+2) Extracted Raw Trajectories
+Longest Trajectory Length: 6 # ASTs at Traj ID: 1127
+Num Trajectories: 6402
+3) Trajectories matrix created and encoded
+Trajectories Matrix shape: (6402, 6, 924)
+INFO: Saving trajectories matrix and AST ID map
+Traj Matrix Filename: ../processed_data/traj_matrix_8.npy
+Map AST ID to Row Index Filename: ../processed_data/map_ast_row_8.pickle
+Finished extracting ASTs from Problem 8 in 1.116771s
+
+
+*** INFO: HOC 9 ***
+1a) Cleaning trajectories
+Get set of trajectories to remove for HOC 9...
+Clip trajectories with count <= 1
+Original num trajectories:  175131
+Clipped trajectories:  162798
+Remaining trajectories:  12333
+Percentage trajectories remaining:  7.04215701389%
+Percentage trajectories remaining weighted by freq: 7.04215701389%
+1b) Cleaning ASTs
+Original num ASTS: 175132
+Removed ASTS: 175132
+Remaining ASTS: 2041
+Percentage ASTs remaining:  1.16540666469%
+2) Extracted Raw Trajectories
+Longest Trajectory Length: 6 # ASTs at Traj ID: 10143
+Num Trajectories: 12324
+3) Trajectories matrix created and encoded
+Trajectories Matrix shape: (12324, 6, 2042)
+INFO: Saving trajectories matrix and AST ID map
+Traj Matrix Filename: ../processed_data/traj_matrix_9.npy
+Map AST ID to Row Index Filename: ../processed_data/map_ast_row_9.pickle
+Finished extracting ASTs from Problem 9 in 4.114548s
