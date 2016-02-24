@@ -31,6 +31,7 @@
 ########
 data
 processed_data
+*.npy
 
 # OS generated files #
 ######################
@@ -41,12 +42,8 @@ processed_data
 .Trashes
 ehthumbs.db
 Thumbs.db
+*.ipynb_checkpoints*
 
 # Other #
 #########
 studentSimulator
-
-# DATA #
-########
-processed_data
-*.npy

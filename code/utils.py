@@ -175,10 +175,45 @@ def prepare_traj_data_for_rnn(raw_matrix):
     y = np.zeros((num_traj, num_timesteps))
     for n in xrange(num_traj):
         for t in xrange(num_timesteps):
-            y[n,t] = np.argmax(raw_matrix[n,t,:])
+            y[n,t] = np.argmax(raw_matrix[n,t+1,:])
 
     return X, y
 
+def convert_data_to_ast_ids(data, row_to_ast_id_map):
+
+    '''
+    INPUT:
+    data = (X,y)
+    X: (batchsize, num_timesteps, num_asts)
+    y: (batchsize, num_timestep)
+
+    OUTPUT:
+    X_ast_ids: (batchsize, num_timesteps), containing ast ids, which we can
+            use to look up ast json files.
+    y_ast_ids: (batchsize, num_timesteps)
+
+    '''
+
+    X, y = data
+    batchsize, num_timesteps, num_asts = X.shape
+    X_ast_ids = np.zeros((batchsize, num_timesteps))
+    y_ast_ids = np.zeros((batchsize, num_timesteps))
+
+    for n in xrange(batchsize):
+        for t in xrange(num_timesteps):
+            y_ast_ids[n,t] = row_to_ast_id_map[int(y[n,t])]
+            X_ast_ids[n,t] = row_to_ast_id_map[np.argmax(X[n,t,:])]
+
+    return X_ast_ids, y_ast_ids
+
+def convert_pred_to_ast_ids(pred, row_to_ast_id_map)
+    batchsize, num_timesteps, num_asts = pred.shape
+    pred_ast_ids = np.zeros((batchsize, num_timesteps))
+    for n in xrange(batchsize):
+        for t in xrange(num_timesteps):
+            pred_ast_ids[n,t] = row_to_ast_id_map[np.argmax(pred[n,t,:])]
+    
+    return pred_ast_ids
 
 # def prepare_traj_data_for_rnn(raw_matrix):
 #     """
