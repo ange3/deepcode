@@ -51,7 +51,7 @@ def plot_loss_acc(data_set, losses, train_accs, val_accs, lr, rg, ep, num_train)
     plt.show()
 
     timestr = time.strftime("%Y%m%d-%H%M%S")
-    figure_filename = "loss_plots/{}_lr{}_rg{}_ep{}_num_train{}_{}.png".format(data_set, lr, rg, ep, num_train, timestr)
+    figure_filename = "../loss_plots/{}_lr{}_rg{}_ep{}_num_train{}_{}.png".format(data_set, lr, rg, ep, num_train, timestr)
     fig.savefig(figure_filename)
 
 def plot_loss_train_test_acc(data_set, losses, train_accuracies, test_accuracies, lr, rg, ep, num_train):
@@ -79,5 +79,5 @@ def plot_loss_train_test_acc(data_set, losses, train_accuracies, test_accuracies
     plt.show()
 
     timestr = time.strftime("%Y%m%d-%H%M%S")
-    figure_filename = "loss_plots/{}_lr{}_rg{}_ep{}_n{}_{}.png".format(data_set, lr, rg, ep, num_train, timestr)
+    figure_filename = "../loss_plots/{}_lr{}_rg{}_ep{}_n{}_{}.png".format(data_set, lr, rg, ep, num_train, timestr)
     fig.savefig(figure_filename)
