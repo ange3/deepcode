@@ -114,149 +114,183 @@ def create_model(num_timesteps, num_asts, hidden_size, learning_rate, grad_clip=
     return train_loss_acc, compute_loss_acc, probs # , pred_2d_shape, truth_1d_shape
 
     
-def _check_val_loss_acc(X_val, truth_val, batchsize, compute_loss_acc):
-    # a full pass over the validation data:
-    val_err = 0.0
-    val_acc = 0.0
-    val_batches = 0
-    for batch in utils.iter_minibatches([X_val, truth_val], batchsize, shuffle=False):
-        X_, truth_ = batch
-        err, acc, pred = compute_loss_acc(X_, truth_)
-        val_err += err
-        val_acc += acc
-        val_batches += 1
-    val_loss = val_err/val_batches
-    val_acc = val_acc/val_batches * 100
-    return val_loss, val_acc
+def _compute_loss_acc_pred(X, truth, compute_loss_acc):
+    # a full pass over the given data without training
+    # returns loss, raw accuracy, corrected accuracy and predictions
+    loss, acc, pred = compute_loss_acc(X, truth)
+    corrected_acc = compute_corrected_acc_on_ast_rows(X, truth, pred)
+    return loss, acc, corrected_acc, pred
 
 
-def train(train_data, val_data, train_loss_acc, compute_loss_acc, num_epochs=5, batchsize=32):
-    
+def train(train_data, val_data, train_loss_acc, compute_loss_acc, num_epochs=5, batchsize=32, record_per_iter=False):
     X_train, truth_train = train_data
     X_val, truth_val = val_data
+
+    num_train = X_train.shape[0]
+    total_train_iters = (num_train / batchsize) * num_epochs
+    num_iters = 0
+
+
     print("Starting training...")
+    print("Total training iterations: {}".format(total_train_iters))
     # We iterate over epochs:
-    train_accuracies = []
-    val_accuracies = []
+    train_accs = []
+    val_accs = []
+    train_corrected_accs = []
+    val_corrected_accs = []
     train_losses = []
     val_losses = []
 
     for epoch in range(num_epochs):
         # In each epoch, we do a full pass over the training data:
-        train_err = 0.0
-        train_acc = 0.0
+        train_loss_ep = 0.0
+        train_acc_ep = 0.0
+        train_corrected_acc_ep = 0.0
         train_batches = 0
         start_time = time.time()
         for batch in utils.iter_minibatches([X_train, truth_train], batchsize, shuffle=False):
             X_, truth_ = batch
-            err, acc, pred = train_loss_acc(X_, truth_)
-            train_err += err
-            train_acc += acc
+            train_loss, train_acc, train_pred = train_loss_acc(X_, truth_)
+            train_corrected_acc = compute_corrected_acc_on_ast_rows(X_, truth_, train_pred)
+            train_loss_ep += train_loss
+            train_acc_ep += train_acc
+            train_corrected_acc_ep += train_corrected_acc
             train_batches += 1
-            val_loss, val_acc = _check_val_loss_acc(X_val, truth_val, batchsize, compute_loss_acc)
-            print("  Epoch {} \tbatch {} \tloss {} \ttrain acc {:.2f} \tval acc {:.2f} ".format(epoch, train_batches, err, acc * 100, val_acc) )
-        train_acc = train_acc/train_batches * 100
-        train_accuracies.append(train_acc)
-        train_loss = train_err/train_batches
-        train_losses.append(train_loss)
+            num_iters += 1
+            val_loss, val_acc, val_corrected_acc, pred_val = _compute_loss_acc_pred(X_val, truth_val, compute_loss_acc)
+            print("Ep {} \titer {}  \tloss {:.5f}, train acc {:.2f}, train corr acc {:.2f}, val acc {:.2f}, val corr acc {:.2f}".format(epoch, num_iters, float(train_loss), train_acc * 100, train_corrected_acc * 100, val_acc *100, val_corrected_acc *100) )
+        
+            if record_per_iter:
+                train_accs.append(train_acc)
+                train_corrected_accs.append(train_corrected_acc)
+                train_losses.append(train_loss)
+                val_losses.append(val_loss)
+                val_accs.append(val_acc)
+                val_corrected_accs.append(val_corrected_acc)
 
-        val_loss, val_acc = _check_val_loss_acc(X_val, truth_val, batchsize, compute_loss_acc)
-        val_losses.append(val_loss)
-        val_accuracies.append(val_acc)
+        train_acc = train_acc_ep/train_batches
+        train_corrected_acc = train_corrected_acc_ep/train_batches
+        train_loss = train_loss_ep/train_batches
+
+        val_loss, val_acc, val_corrected_acc, pred_val = _compute_loss_acc_pred(X_val, truth_val, compute_loss_acc)
+        if not record_per_iter:
+            # recording values for each epoch
+            train_accs.append(train_acc)
+            train_corrected_accs.append(train_corrected_acc)
+            train_losses.append(train_loss)
+            val_losses.append(val_loss)
+            val_accs.append(val_acc)
+            val_corrected_accs.append(val_corrected_acc)
 
         # Then we print the results for this epoch:
-        print("Epoch {} of {} took {:.3f}s".format(
-            epoch + 1, num_epochs, time.time() - start_time))
+        print("\nEpoch {} of {} took {:.3f}s".format(epoch + 1, num_epochs, time.time() - start_time))
         print("  training loss:\t\t{:.6f}".format(train_loss))
-        print("  training accuracy:\t\t{:.2f} %".format(train_acc))
-        print("  validation loss:\t\t{:.6f}".format(val_loss))
-        print("  validation accuracy:\t\t{:.2f} %".format(val_acc))
+        print("  training raw accuracy:\t\t{:.2f} %".format(train_acc * 100))
+        print("  training corrected acc:\t\t{:.2f} %".format(train_corrected_acc * 100))
+
+        print("  validation loss:\t\t{:.6f}".format(float(val_loss)))
+        print("  validation raw accuracy:\t\t{:.2f} %".format(val_acc * 100))
+        print("  validation corrected acc:\t\t{:.2f} % \n".format(val_corrected_acc * 100))
 
     print("Training completed.")
-    return train_losses, train_accuracies, val_accuracies
+    return train_losses, train_accs, train_corrected_accs, val_losses, val_accs, val_corrected_accs
 
-   
-def get_predicted_ast_ids(pred, truth, row_to_ast_id_map):
-    '''
-    Takes in a prediction matrix and returns the predicted AST ID at each sample and each timestep 
 
-    pred: (batchsize, num_timesteps, num_asts)
-    truth: (batchsize, num_timesteps)
 
-    pred_output: (batchsize, num_timesteps)
-    '''
-
-    batchsize, num_timesteps, num_asts = pred.shape
-    pred_output = np.zeros((batchsize, num_timesteps))
-    truth_output = np.zeros((batchsize, num_timesteps))
-
-    for n in xrange(batchsize):
-        for t in xrange(num_timesteps):
-            pred_output[n,t] = row_to_ast_id_map[np.argmax(pred[n,t,:])]
-            truth_output[n,t] = row_to_ast_id_map[int(truth[n,t])]
-
-    return pred_output, truth_output
-
-def get_predicted_ast_ids_and_corrected_acc(X, pred, truth, row_to_ast_id_map):
-    '''
-    Takes in a prediction matrix and returns the predicted AST ID at each sample and each timestep 
-
-    pred: (batchsize, num_timesteps, num_asts)
-    truth: (batchsize, num_timesteps)
-
-    pred_output: (batchsize, num_timesteps) with values corresponding to the 
-            actual ast ids, which we can use to look up the ast json files.
-    truth_output: (batchsize, num_timesteps) with values corresponding to the 
-            actual ast ids, which we can use to look up the ast json files.
-    corrected_acc: By ignoring predictions on <END> tokens except the 
-            of the first <END> token in each sequence, we get the corrected accuracy.
-    '''
-
-    batchsize, num_timesteps, num_asts = pred.shape
-    pred_output = np.zeros((batchsize, num_timesteps))
-    truth_output = np.zeros((batchsize, num_timesteps))
-    X_ast_ids = np.zeros((batchsize, num_timesteps))
-
+def compute_corrected_acc_on_ast_rows(X, truth, pred):
+    batchsize, num_timesteps, num_asts = X.shape
     correct_count = 0
     total_count = 0
     for n in xrange(batchsize):
         for t in xrange(num_timesteps):
-            pred_output[n,t] = row_to_ast_id_map[np.argmax(pred[n,t,:])]
-            truth_output[n,t] = row_to_ast_id_map[int(truth[n,t])]
-            X_ast_ids[n,t] = row_to_ast_id_map[np.argmax(X[n,t,:])]
-            if X_ast_ids[n,t] != -1:
+            if np.argmax(X[n,t,:]) != 0:
+                # only include predictions not on the <END> token
                 total_count += 1
-                if pred_output[n,t] == truth_output[n,t]:
+                if np.argmax(pred[n,t,:]) == truth[n,t]:
                     correct_count += 1
     corrected_acc = correct_count/float(total_count)
-    return X_ast_ids, pred_output, truth_output, corrected_acc
+    return corrected_acc
+
+
+def compute_corrected_acc_on_ast_ids(X_ast_ids, truth_ast_ids, pred_ast_ids): 
+    batchsize, num_timesteps = X_ast_ids.shape
+    correct_count = 0
+    total_count = 0
+    for n in xrange(batchsize):
+        for t in xrange(num_timesteps):
+            if X_ast_ids[n,t] != -1:
+                # only include predictions not on the <END> token
+                total_count += 1
+                if pred_ast_ids[n,t] == truth_ast_ids[n,t]:
+                    correct_count += 1
+    corrected_acc = correct_count/float(total_count)
+    return corrected_acc
+
+
+# def get_predicted_ast_ids(pred, truth, row_to_ast_id_map):
+#     '''
+#     Takes in a prediction matrix and returns the predicted AST ID at each sample and each timestep 
+
+#     pred: (batchsize, num_timesteps, num_asts)
+#     truth: (batchsize, num_timesteps)
+
+#     pred_output: (batchsize, num_timesteps)
+#     '''
+
+#     batchsize, num_timesteps, num_asts = pred.shape
+#     pred_output = np.zeros((batchsize, num_timesteps))
+#     truth_output = np.zeros((batchsize, num_timesteps))
+
+#     for n in xrange(batchsize):
+#         for t in xrange(num_timesteps):
+#             pred_output[n,t] = row_to_ast_id_map[np.argmax(pred[n,t,:])]
+#             truth_output[n,t] = row_to_ast_id_map[int(truth[n,t])]
+
+#     return pred_output, truth_output
+
+# def get_predicted_ast_ids_and_corrected_acc(X, truth, pred, row_to_ast_id_map):
+#     '''
+#     Takes in a prediction matrix and returns the predicted AST ID at each sample and each timestep 
+
+#     pred: (batchsize, num_timesteps, num_asts)
+#     truth: (batchsize, num_timesteps)
+
+#     pred_output: (batchsize, num_timesteps) with values corresponding to the 
+#             actual ast ids, which we can use to look up the ast json files.
+#     truth_output: (batchsize, num_timesteps) with values corresponding to the 
+#             actual ast ids, which we can use to look up the ast json files.
+#     corrected_acc: By ignoring predictions on <END> tokens except the 
+#             of the first <END> token in each sequence, we get the corrected accuracy.
+#     '''
+
+#     X_ast_ids, truth_ast_ids = utils.convert_data_to_ast_ids((X, truth), row_to_ast_id_map)
+#     pred_ast_ids = utils.convert_pred_to_ast_ids(pred, row_to_ast_id_map)
+#     batchsize, num_timesteps, num_asts = pred.shape
+
+#     correct_count = 0
+#     total_count = 0
+#     for n in xrange(batchsize):
+#         for t in xrange(num_timesteps):
+#             if X_ast_ids[n,t] != -1:
+#                 total_count += 1
+#                 if pred_ast_ids[n,t] == truth_ast_ids[n,t]:
+#                     correct_count += 1
+#     corrected_acc = correct_count/float(total_count)
+#     return X_ast_ids, pred_ast_ids, truth_ast_ids, corrected_acc
 
 
 
-def check_accuracy(data, compute_loss_acc, row_to_ast_id_map, dataset_name='test', batchsize=32):
+def check_accuracy(data, compute_loss_acc, row_to_ast_id_map, dataset_name):
     X, truth = data
     print("Testing...")
     # After training, we compute and print the test error:
 
-    loss, raw_acc, pred = compute_loss_acc(X, truth)
-    X_ast_ids, predicted_ast_ids, truth_ast_ids, corrected_acc = get_predicted_ast_ids_and_corrected_acc(X, pred, truth, row_to_ast_id_map)
-
-    # for batch in utils.iter_minibatches([X_test, truth_test], batchsize, shuffle=False):
-    #     X_, truth_ = batch
-    #     err, acc, pred = compute_loss_acc(X_, truth_)
-    #     test_err += err
-    #     test_acc += acc
-    #     test_batches += 1
-    #     predicted_ast_ids, truth_ast_ids = get_predicted_ast_ids(pred, truth_, row_to_ast_id_map)
-    #     print("Predicted AST IDs")
-    #     print predicted_ast_ids[:10,:]
-    #     print ("Truth AST IDs")
-    #     print truth_ast_ids[:10, :]
+    loss, raw_acc, corrected_acc, pred = _compute_loss_acc_pred(X, truth, compute_loss_acc)
 
     print("Final results:")
     print("  {} loss:\t\t\t{:.6f}".format(dataset_name, loss * 1.0))
     print("  {} raw accuracy:\t\t{:.2f} %".format(dataset_name, raw_acc * 100))
     print("  {} corrected accuracy:\t{:.2f} %".format(dataset_name, corrected_acc * 100))
 
-    return X_ast_ids, predicted_ast_ids, truth_ast_ids, loss, raw_acc, corrected_acc
+    return loss, raw_acc, corrected_acc, pred
 

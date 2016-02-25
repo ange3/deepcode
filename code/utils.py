@@ -206,7 +206,7 @@ def convert_data_to_ast_ids(data, row_to_ast_id_map):
 
     return X_ast_ids, y_ast_ids
 
-def convert_pred_to_ast_ids(pred, row_to_ast_id_map)
+def convert_pred_to_ast_ids(pred, row_to_ast_id_map):
     batchsize, num_timesteps, num_asts = pred.shape
     pred_ast_ids = np.zeros((batchsize, num_timesteps))
     for n in xrange(batchsize):
