@@ -129,12 +129,28 @@ gradesHist
 
 totalScore = sum(grades$score * grades$count)
 totalCounts = sum(grades$count)
+correctCounts = sum(grades[grades$score >= 20,]$count)
 meanGrade = totalScore/totalCounts
+percentCorrect = correctCounts/totalCounts
+percentGold = grades[grades$score == 100,]$count/totalCounts
+grades$meandiffSquared = (grades$score - meanGrade)^2
+variance = sum(grades$meandiffSquared * grades$count)/totalCounts
+stdev = variance ^ 0.5
 
 summary(grades)
 print(paste("Min grade:", min(grades$score)))
 print(paste("Max grade:", max(grades$score)))
 #print(paste("Median grade:", ifelse(grades['score'] == 100 | astScores['score'] == 20, 1, 0)))
 print(paste("Mean grade:", meanGrade))
+print(paste("Variance:", variance))
+print(paste("St.Dev:", stdev))
 
+print(paste("Percentage correct: ", percentCorrect))
+print(paste("Percentage gold: ", percentGold))
+```
+```{r}
+#Change working directory
+setwd("C:/Users/Larry/Dropbox/Stanford University/2015-2016/Winter Quarter/CS191W/hoc1-9_new/hoc2/trajectories")
+
+filelist = list.files(pattern="^[[:digit:]]*.txt")
 ```
