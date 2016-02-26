@@ -7,7 +7,7 @@
 #
 #==============================================================================
 # DESCRIPTION:
-# A 
+# 
 #==============================================================================
 # CURRENT STATUS: In progress/ working! :) 
 #==============================================================================
@@ -50,9 +50,9 @@ def _build_net_layers_dropout(num_timesteps, num_problems, hidden_size, learning
         num_units=num_problems,
         W = lasagne.init.Normal(),
         nonlinearity=lasagne.nonlinearities.sigmoid)
-    l_pred = lasagne.layers.ReshapeLayer(l_out, (-1, num_timesteps, num_problems))
+    l_out = lasagne.layers.ReshapeLayer(l_out, (-1, num_timesteps, num_problems))
 
-    return l_in, l_pred
+    return l_in, l_out
     
 
 def create_model(num_timesteps, num_problems, hidden_size, learning_rate, grad_clip=10, dropout_p=0.5, num_lstm_layers=1):
@@ -61,12 +61,12 @@ def create_model(num_timesteps, num_problems, hidden_size, learning_rate, grad_c
      and test function, which also reports both loss and accuracy
     '''
     
-    l_in, l_pred = _build_net_layers_dropout(num_timesteps, num_problems, hidden_size, learning_rate, grad_clip, dropout_p, num_lstm_layers)
+    l_in, l_out = _build_net_layers_dropout(num_timesteps, num_problems, hidden_size, learning_rate, grad_clip, dropout_p, num_lstm_layers)
     ''' pred:for each student, a vector that gives probability of next question being answered correctly
         y: for each student, a one-hot-encoding of shape (num_timesteps, num_problems), indicating which problem the student will do at the next timestep 
         truth: for each student, a vector that indicates for each timestep whether next problem was answered correctly
     '''
-    pred = lasagne.layers.get_output(l_pred)
+    pred = lasagne.layers.get_output(l_out)
     next_problem = T.tensor3('next_problem')
     truth = T.imatrix("truth")
 
@@ -85,7 +85,7 @@ def create_model(num_timesteps, num_problems, hidden_size, learning_rate, grad_c
 
     # update function
     print("Computing updates ...")
-    all_params = lasagne.layers.get_all_params(l_pred)
+    all_params = lasagne.layers.get_all_params(l_out)
     updates = lasagne.updates.adam(cost, all_params, learning_rate)
 
     # Function to compute accuracy:
