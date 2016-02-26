@@ -29,6 +29,30 @@ def smoothen_data(data, smooth_window=100):
         smooth.append(np.mean(data[i:len(data)]))
     return smooth
 
+def plot_loss_acc(data_set, losses, train_accs, val_accs, lr, rg, ep, num_train,  xlabel='epochs'):              
+    fig = plt.figure()
+    ax1 = fig.add_subplot(111)
+    train_accs_line, = ax1.plot(xrange(len(train_accs)), train_accs, 'b-', label='train accuracies')
+    val_accs_line, = ax1.plot(xrange(len(val_accs)), val_accs, 'g-', label='val accuracies')
+
+    ax1.set_ylabel('accuracies', color='b')
+    ax1.set_xlabel(xlabel)
+    for tl in ax1.get_yticklabels():
+        tl.set_color('b')
+
+    ax2 = ax1.twinx()
+    losses_line, = ax2.plot(xrange(len(losses)), losses, 'r-', label='losses')
+    ax2.set_ylabel('losses', color='r')
+    for tl in ax2.get_yticklabels():
+        tl.set_color('r')
+
+    plt.legend(handles=[losses_line, train_accs_line, val_accs_line],bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=2, mode="expand")
+
+    plt.show()
+
+    timestr = time.strftime("%Y%m%d-%H%M%S")
+    figure_filename = "../loss_plots/{}_lr{}_rg{}_ep{}_num_train{}_{}.png".format(data_set, lr, rg, ep, num_train, timestr)
+    fig.savefig(figure_filename)
 
 def plot_loss_train_test_acc(data_set, losses, train_accuracies, test_accuracies, lr, rg, ep, num_train):
     smooth_accs_train = smoothen_data(train_accuracies)
@@ -55,5 +79,5 @@ def plot_loss_train_test_acc(data_set, losses, train_accuracies, test_accuracies
     plt.show()
 
     timestr = time.strftime("%Y%m%d-%H%M%S")
-    figure_filename = "loss_plots/{}_lr{}_rg{}_ep{}_n{}_{}.png".format(data_set, lr, rg, ep, num_train, timestr)
+    figure_filename = "../loss_plots/{}_lr{}_rg{}_ep{}_n{}_{}.png".format(data_set, lr, rg, ep, num_train, timestr)
     fig.savefig(figure_filename)
