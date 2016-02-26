@@ -127,6 +127,7 @@ def train(train_data, val_data, train_loss_acc, compute_loss_acc, num_epochs=5, 
     X_val, truth_val = val_data
 
     num_train = X_train.shape[0]
+    num_val = X_val.shape[0]
     total_train_iters = (num_train / batchsize) * num_epochs
     num_iters = 0
 
@@ -152,10 +153,10 @@ def train(train_data, val_data, train_loss_acc, compute_loss_acc, num_epochs=5, 
             X_, truth_ = batch
             train_loss, train_acc, train_pred = train_loss_acc(X_, truth_)
             train_corrected_acc = compute_corrected_acc_on_ast_rows(X_, truth_, train_pred)
-            train_loss_ep += train_loss
-            train_acc_ep += train_acc
-            train_corrected_acc_ep += train_corrected_acc
-            train_batches += 1
+            # train_loss_ep += train_loss
+            # train_acc_ep += train_acc
+            # train_corrected_acc_ep += train_corrected_acc
+            # train_batches += 1
             num_iters += 1
             val_loss, val_acc, val_corrected_acc, pred_val = _compute_loss_acc_pred(X_val, truth_val, compute_loss_acc)
             print("Ep {} \titer {}  \tloss {:.5f}, train acc {:.2f}, train corr acc {:.2f}, val acc {:.2f}, val corr acc {:.2f}".format(epoch, num_iters, float(train_loss), train_acc * 100, train_corrected_acc * 100, val_acc *100, val_corrected_acc *100) )
@@ -168,11 +169,12 @@ def train(train_data, val_data, train_loss_acc, compute_loss_acc, num_epochs=5, 
                 val_accs.append(val_acc)
                 val_corrected_accs.append(val_corrected_acc)
 
-        train_acc = train_acc_ep/train_batches
-        train_corrected_acc = train_corrected_acc_ep/train_batches
-        train_loss = train_loss_ep/train_batches
-
-        val_loss, val_acc, val_corrected_acc, pred_val = _compute_loss_acc_pred(X_val, truth_val, compute_loss_acc)
+        # train_acc = train_acc_ep/train_batches
+        # train_corrected_acc = train_corrected_acc_ep/train_batches
+        # train_loss = train_loss_ep/train_batches
+        
+        # train_loss, train_acc, train_corrected_acc, pred_train = _compute_loss_acc_pred(X_train[:num_val,:,:], truth_train[:num_val,:], compute_loss_acc)
+        train_loss, train_acc, train_corrected_acc, pred_train = _compute_loss_acc_pred(X_train, truth_train, compute_loss_acc)        
         if not record_per_iter:
             # recording values for each epoch
             train_accs.append(train_acc)
@@ -184,7 +186,7 @@ def train(train_data, val_data, train_loss_acc, compute_loss_acc, num_epochs=5, 
 
         # Then we print the results for this epoch:
         print("\nEpoch {} of {} took {:.3f}s".format(epoch + 1, num_epochs, time.time() - start_time))
-        print("  training loss:\t\t{:.6f}".format(train_loss))
+        print("  training loss:\t\t{:.6f}".format(float(train_loss)))
         print("  training raw accuracy:\t\t{:.2f} %".format(train_acc * 100))
         print("  training corrected acc:\t\t{:.2f} %".format(train_corrected_acc * 100))
 
