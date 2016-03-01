@@ -11,20 +11,19 @@ import matplotlib.pyplot as plt
 from utils import *
 from visualize import *
 sys.path.append(os.path.abspath("models/"))
-from baseline_prob_of_previous_problems import *
+from baseline_imitate_previous_problem import *
 from abstract_knowledge_model import *
 
 
 data_sets_map = {
-    'synth':"syntheticDetailed/naive_c5_q50_s4000_v0.csv",
-    'code_org' : "data/hoc_1-9_binary_input.csv"
+    'synth':"../../syntheticDetailed/naive_c5_q50_s4000_v0.csv",
+    'code_org' : "../../data/hoc_1-9_binary_input.csv"
 }
 
-DATA_SET = 'code_org'
-DATA_SZ = 500000
-# DATA_SET = 'synth'
-# DATA_SZ = 4000 # num_samples
-
+# DATA_SET = 'code_org'
+# DATA_SZ = 500000
+DATA_SET = 'synth'
+DATA_SZ = 4000  # num_samples
 
 # Read in the data set
 # This function can be moved to utils.py
@@ -40,8 +39,6 @@ print 'NUM PROBLEMS', num_problems
 # time steps is number of problems - 1 because we cannot predict on the last problem.
 num_timesteps = num_problems - 1 
 
-WINDOW_SIZE_LIST = [x for x in xrange(num_timesteps)]
-
 # No need to split data since no training needed
 test_data = data_array
 
@@ -50,21 +47,12 @@ X_test, next_problem_test, truth_test = vectorize_data(test_data)
 print ("Vectorization done!")
 print X_test.shape
 
-# model = Baseline_prob_of_previous_problems(num_timesteps, num_problems, True, WINDOW_SIZE)
-# prediction_probs = model.predict(X_test, next_problem_test)
+model = Baseline_imitate_previous_problem(num_timesteps, num_problems)
+prediction = model.predict(X_test, next_problem_test)
 
-# Using different window sizes
-for window_size in WINDOW_SIZE_LIST:
-  model = Baseline_prob_of_previous_problems(num_timesteps, num_problems, True, window_size)
-  prediction_probs = model.predict(X_test, next_problem_test)
+# print prediction
+# print truth_test
+# print np.equal(prediction, truth_test)
 
-  # print prediction_probs
-  prediction_correct_wrong = np.zeros(prediction_probs.shape)
-  prediction_correct_wrong[prediction_probs >= 0.5] = 1
-  # print prediction_correct_wrong
-  # print truth_test
-  # print np.equal(prediction, truth_test)
-
-  accuracy = np.mean(np.equal(prediction_correct_wrong, truth_test))
-  print 'Window size: ', window_size
-  print 'Accuracy is: ', accuracy
+accuracy = np.mean(np.equal(prediction, truth_test))
+print 'Accuracy is: ', accuracy
