@@ -32,6 +32,7 @@
 data
 processed_data
 *.npy
+loss_plots
 
 # OS generated files #
 ######################
