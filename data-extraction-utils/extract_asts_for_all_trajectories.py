@@ -76,7 +76,7 @@ def get_set_of_trajs_to_remove(hoc_num, freq_threshold, map_traj_to_count, verbo
         print 'Percentage trajectories remaining weighted by freq: {}%'.format(float(num_remaining_times_frequency)/num_original*100)
     return traj_id_to_remove_set
 
-def extract_asts_for_one_hoc_from_larry_trajectories(hoc_num, clip_traj_bool_by_freq, clip_traj_freq, clip_traj_length, verbose = True, save_traj_matrix = True):
+def extract_asts_for_one_hoc_from_larry_trajectories(hoc_num, clip_traj_bool_by_freq, clip_traj_freq, clip_traj_length, clip_num_traj = -1, verbose = True, save_traj_matrix = True):
     '''
     Extracts a trajectories matrix for one problem as a one-hot encoding of each AST's ID
     Output: (num_trajectories, num_timesteps, num_asts)
@@ -109,6 +109,9 @@ def extract_asts_for_one_hoc_from_larry_trajectories(hoc_num, clip_traj_bool_by_
     with open(filepath, 'rb') as traj_file:
         row_index = 0
         for index, line in enumerate(csv.reader(traj_file, delimiter=',')):
+            # limit num trajectories loaded
+            if clip_num_traj != -1 and row_index == clip_num_traj:
+              break
             traj_id = line[0]
             if clip_traj_bool_by_freq and traj_id in traj_id_to_remove_set:
                 # print 'skipping ', traj_id
@@ -222,7 +225,7 @@ def extract_asts_for_one_hoc_from_larry_trajectories(hoc_num, clip_traj_bool_by_
         # print ast, map_test[ast]
 
 
-def extract_asts_for_all_hocs(start_problem_id, end_problem_id, clip_traj_bool, clip_traj_freq, clip_traj_length, verbose=True):
+def extract_asts_for_all_hocs(start_problem_id, end_problem_id, clip_traj_bool, clip_traj_freq, clip_traj_length, clip_num_traj = -1, verbose=True):
     '''
     Extracts trajectories matrix for all problems from START_PROBLEM_ID to END_PROBLEM_ID inclusive.
     Saves trajectories matrices to a numpy file and AST ID to row index maps to a pickle file.
@@ -232,7 +235,7 @@ def extract_asts_for_all_hocs(start_problem_id, end_problem_id, clip_traj_bool, 
             print '*** INFO: HOC {} ***'.format(hoc_num)
 
         tic = time.clock()
-        extract_asts_for_one_hoc_from_larry_trajectories(hoc_num, clip_traj_bool, clip_traj_freq, clip_traj_length)
+        extract_asts_for_one_hoc_from_larry_trajectories(hoc_num, clip_traj_bool, clip_traj_freq, clip_traj_length, clip_num_traj)
         toc = time.clock()
 
         if verbose:
@@ -261,15 +264,16 @@ def test_extracted_traj_matrix(hoc_num):
     print 'map_ast_id_to_row_index[AST 12] = {}, map_ast_id_to_row_index[AST 0] = {}'.format(map_ast_id_to_row_index['12'], map_ast_id_to_row_index['0'])
 
 if __name__ == "__main__":
-    START_PROBLEM_ID = 2
-    END_PROBLEM_ID = 9
+    START_PROBLEM_ID = 1
+    END_PROBLEM_ID = 1
 
     CLIP_TRAJECTORY_BOOL = False
-    clip_traj_freq = 1
+    CLIP_TRAJ_FREQ = 1
+    CLIP_NUM_TRAJ = 5000
 
     CLIP_TRAJECTORY_LENGTH = 20
 
-    extract_asts_for_all_hocs(START_PROBLEM_ID, END_PROBLEM_ID, CLIP_TRAJECTORY_BOOL, clip_traj_freq, CLIP_TRAJECTORY_LENGTH)
+    extract_asts_for_all_hocs(START_PROBLEM_ID, END_PROBLEM_ID, CLIP_TRAJECTORY_BOOL, CLIP_TRAJ_FREQ, CLIP_TRAJECTORY_LENGTH, CLIP_NUM_TRAJ)
 
     # To test extracted trajectory matrix
     # hoc_num = 3
