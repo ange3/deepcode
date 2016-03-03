@@ -22,12 +22,6 @@ COUNTS_FILENAME_POST = '.txt'
 
 PATH_TO_PROCESSED_DATA = '../processed_data/'
 
-START_PROBLEM_ID = 3
-END_PROBLEM_ID = 7
-
-CLIP_TRAJECTORY_LENGTH = 20
-CLIP_TRAJECTORY_WITH_NUM_COUNT_THRESHOLD = 1
-
 AST_ID_FOR_END_TOKEN = -1
 ROW_INDEX_FOR_END_TOKEN = 0
 
@@ -43,7 +37,7 @@ def count_total_asts(hoc_num):
             counts += 1
     return counts
 
-def get_set_of_trajs_to_remove(hoc_num, freq_threshold, verbose = True):
+def get_set_of_trajs_to_remove(hoc_num, freq_threshold, map_traj_to_count, verbose = True):
     '''
     Return set of Trajectory IDs with a count less than or equal to freq_threshold
     Args: hoc_num is the problem number
@@ -62,6 +56,7 @@ def get_set_of_trajs_to_remove(hoc_num, freq_threshold, verbose = True):
     with open(filepath, 'rb') as count_file:
         for index, line in enumerate(count_file):
             traj_id, count = line.split() # tokenize over white space
+            map_traj_to_count[traj_id] = int(count)  # assume each traj_id is only listed once in file
             if int(count) <= freq_threshold:
                 traj_id_to_remove_set.add(traj_id)
 
@@ -69,13 +64,19 @@ def get_set_of_trajs_to_remove(hoc_num, freq_threshold, verbose = True):
         num_original = index
         num_removed = len(traj_id_to_remove_set)
         num_remaining = num_original-num_removed
+
+        num_removed_times_frequency = 0
+        for traj_id in traj_id_to_remove_set:
+            num_removed_times_frequency += map_traj_to_count[traj_id]  # num_removed_times_frequency == num_removed when frequency_threshod = 1 since each traj_id for removal will have only been seen once
+        num_remaining_times_frequency = num_original - num_removed_times_frequency
         print 'Original num trajectories:  {}'.format(num_original)
         print 'Clipped trajectories:  {}'.format(num_removed)
         print 'Remaining trajectories:  {}'.format(num_remaining)
         print 'Percentage trajectories remaining:  {}%'.format(float(num_remaining)/num_original*100)
+        print 'Percentage trajectories remaining weighted by freq: {}%'.format(float(num_remaining_times_frequency)/num_original*100)
     return traj_id_to_remove_set
 
-def extract_asts_for_one_hoc_from_larry_trajectories(hoc_num, verbose = True, save_traj_matrix = True):
+def extract_asts_for_one_hoc_from_larry_trajectories(hoc_num, clip_traj_bool_by_freq, clip_traj_freq, clip_traj_length, clip_num_traj = -1, verbose = True, save_traj_matrix = True):
     '''
     Extracts a trajectories matrix for one problem as a one-hot encoding of each AST's ID
     Output: (num_trajectories, num_timesteps, num_asts)
@@ -83,9 +84,14 @@ def extract_asts_for_one_hoc_from_larry_trajectories(hoc_num, verbose = True, sa
             num_trajectories = clipped number of trajectories where trajectory has been seen at least a certain number of times (see get_set_of_trajs_to_remove method),
             num_timesteps = length of the longest trajectory
             num_asts = number of distinct AST IDs in the given trajectories
+
+    clip_traj_bool_by_freq and clip_traj_freq determines removal of trajectories below a certain frequency
+    clip_traj_length of -1 is sign post not to clip the trajectory lengths
     '''
-    traj_id_to_remove_set = get_set_of_trajs_to_remove(hoc_num, CLIP_TRAJECTORY_WITH_NUM_COUNT_THRESHOLD)
+    # Setup variables
     filepath = PATH_TO_LARRY_TRAJECTORIES + LARRY_TRAJECTORIES_FILENAME_PRE + str(hoc_num) + LARRY_TRAJECTORIES_FILENAME_POST
+
+    map_traj_to_count = {}
 
     unique_asts_set = set()
     total_asts_set = set()
@@ -93,14 +99,29 @@ def extract_asts_for_one_hoc_from_larry_trajectories(hoc_num, verbose = True, sa
     raw_trajectories_list = []
     longest_trajectory_len = -1
 
+    map_row_index_to_traj_id = {}
+
+    # Clip trajectory IDs with count < frequency threshold
+    # Want to run this function whether or not clip_traj_bool_by_freq is True because it populates map_traj_to_count
+    traj_id_to_remove_set = get_set_of_trajs_to_remove(hoc_num, clip_traj_freq, map_traj_to_count)
+
     # Extract all trajectories from file and place in raw_trajectories_list
     with open(filepath, 'rb') as traj_file:
+        row_index = 0
         for index, line in enumerate(csv.reader(traj_file, delimiter=',')):
+            # limit num trajectories loaded
+            if clip_num_traj != -1 and row_index == clip_num_traj:
+              break
             traj_id = line[0]
-            if traj_id in traj_id_to_remove_set:
+            if clip_traj_bool_by_freq and traj_id in traj_id_to_remove_set:
                 # print 'skipping ', traj_id
                 continue  # is there a faster way to ignore unwanted lines? load all then use set subtraction?
-            raw_trajectory = np.array(list(line[1:]))
+            if clip_traj_length == -1:
+                raw_trajectory = np.array(list(line[1:]))
+            else:
+                raw_trajectory = np.array(list(line[1:1+clip_traj_length]))
+
+            map_row_index_to_traj_id[row_index] = int(traj_id)
 
             # Clean up trajectories - remove duplicate ASTs
             raw_trajectory_clean = []
@@ -111,11 +132,12 @@ def extract_asts_for_one_hoc_from_larry_trajectories(hoc_num, verbose = True, sa
                     unique_asts_set.add(ast)
                     prev_ast = ast
 
-            # Get max trajectory length
-            if len(raw_trajectory_clean) > longest_trajectory_len:
+            # If we are not clipping by trajectory length, Get max trajectory length
+            if clip_traj_length == -1 and len(raw_trajectory_clean) > longest_trajectory_len:
                 longest_trajectory_len = raw_trajectory.shape[0]
                 longest_trajectory_id = traj_id
             raw_trajectories_list.append(raw_trajectory_clean)
+            row_index += 1
 
             # To test
             # if traj_id == '2345':
@@ -123,23 +145,40 @@ def extract_asts_for_one_hoc_from_larry_trajectories(hoc_num, verbose = True, sa
             #     print raw_trajectory_clean
             #     print len(raw_trajectory_clean)
 
+        # save map_row_index_to_traj_id file
+        map_traj_row_filename = PATH_TO_PROCESSED_DATA + 'map_traj_row_' + str(hoc_num) + '.pickle'
+        pickle.dump(map_row_index_to_traj_id, open( map_traj_row_filename, "wb" ))
+        print '!!! Num trajectory rows', len(map_row_index_to_traj_id)
+
+
     # Create empty trajectories_matrix
     num_trajectories = len(raw_trajectories_list)
     num_remaining_unique_asts = len(unique_asts_set)
     num_ast = num_remaining_unique_asts + 1  # adding 1 for the end token
-    trajectories_matrix = np.zeros((num_trajectories, longest_trajectory_len, num_ast))  
+    if clip_traj_length == -1:
+        num_trajectory_length = longest_trajectory_len
+    else:
+        num_trajectory_length = clip_traj_length
+    trajectories_matrix = np.zeros((num_trajectories, num_trajectory_length, num_ast))  
 
     if verbose:
         num_original = count_total_asts(hoc_num)
-        num_removed = num_original-num_remaining_unique_asts
+        num_remaining_unique_asts_times_traj_frequency = 0
+        # for ast in unique_asts_set:
+        #     num_remaining_unique_asts_times_traj_frequency += map_traj_to_count[] # need traj id not ast id
+        num_removed = num_original-num_remaining_unique_asts_times_traj_frequency
         print '1b) Cleaning ASTs'
         print 'Original num ASTS: {}'.format(num_original)
         print 'Removed ASTS: {}'.format(num_removed)
         print 'Remaining ASTS: {}'.format(num_remaining_unique_asts)
         print 'Percentage ASTs remaining:  {}%'.format(float(num_remaining_unique_asts)/num_original*100)
+        # print 'Percentage ASTs remaining weighted by frequency of trajectory:  {}%'.format(float(num_remaining_unique_asts_times_traj_frequency)/num_original*100) # with weighting by frequency of trajectory
 
         print '2) Extracted Raw Trajectories'
-        print 'Longest Trajectory Length: {} # ASTs at Traj ID: {}'.format(longest_trajectory_len, longest_trajectory_id)
+        if clip_traj_length == -1:
+            print 'Trajectory Length: {} # ASTs at Traj ID: {}'.format(longest_trajectory_len, longest_trajectory_id)
+        else:
+            print 'Trajectory Length: {}'.format(num_trajectory_length)
         print 'Num Trajectories: {}'.format(num_trajectories)
 
 
@@ -166,6 +205,8 @@ def extract_asts_for_one_hoc_from_larry_trajectories(hoc_num, verbose = True, sa
 
     if save_traj_matrix:
         traj_matrix_filename = PATH_TO_PROCESSED_DATA + 'traj_matrix_' + str(hoc_num) + '.npy'
+        if clip_traj_length != -1:
+            traj_matrix_filename = PATH_TO_PROCESSED_DATA + 'traj_matrix_hoc_' + str(hoc_num) + '_timesteps_' + str(clip_traj_length) + '.npy'
         map_ast_row_filename = PATH_TO_PROCESSED_DATA + 'map_ast_row_' + str(hoc_num) + '.pickle'
 
         if verbose:
@@ -184,17 +225,17 @@ def extract_asts_for_one_hoc_from_larry_trajectories(hoc_num, verbose = True, sa
         # print ast, map_test[ast]
 
 
-def extract_asts_for_all_hocs(verbose=True):
+def extract_asts_for_all_hocs(start_problem_id, end_problem_id, clip_traj_bool, clip_traj_freq, clip_traj_length, clip_num_traj = -1, verbose=True):
     '''
     Extracts trajectories matrix for all problems from START_PROBLEM_ID to END_PROBLEM_ID inclusive.
     Saves trajectories matrices to a numpy file and AST ID to row index maps to a pickle file.
     '''
-    for hoc_num in xrange(START_PROBLEM_ID, END_PROBLEM_ID + 1):
+    for hoc_num in xrange(start_problem_id, end_problem_id + 1):
         if verbose:
             print '*** INFO: HOC {} ***'.format(hoc_num)
 
         tic = time.clock()
-        extract_asts_for_one_hoc_from_larry_trajectories(hoc_num)
+        extract_asts_for_one_hoc_from_larry_trajectories(hoc_num, clip_traj_bool, clip_traj_freq, clip_traj_length, clip_num_traj)
         toc = time.clock()
 
         if verbose:
@@ -223,7 +264,16 @@ def test_extracted_traj_matrix(hoc_num):
     print 'map_ast_id_to_row_index[AST 12] = {}, map_ast_id_to_row_index[AST 0] = {}'.format(map_ast_id_to_row_index['12'], map_ast_id_to_row_index['0'])
 
 if __name__ == "__main__":
-    extract_asts_for_all_hocs()
+    START_PROBLEM_ID = 1
+    END_PROBLEM_ID = 1
+
+    CLIP_TRAJECTORY_BOOL = False
+    CLIP_TRAJ_FREQ = 1
+    CLIP_NUM_TRAJ = 5000
+
+    CLIP_TRAJECTORY_LENGTH = 20
+
+    extract_asts_for_all_hocs(START_PROBLEM_ID, END_PROBLEM_ID, CLIP_TRAJECTORY_BOOL, CLIP_TRAJ_FREQ, CLIP_TRAJECTORY_LENGTH, CLIP_NUM_TRAJ)
 
     # To test extracted trajectory matrix
     # hoc_num = 3
