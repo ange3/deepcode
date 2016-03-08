@@ -180,9 +180,9 @@ def test_extracted_ast_matrix(hoc_num):
 
 
 if __name__ == "__main__":
-  START_PROBLEM_ID = 2
-  END_PROBLEM_ID = 3
-  CLIP_TIMESTEPS = 20
+  START_PROBLEM_ID = 6
+  END_PROBLEM_ID = 9
+  CLIP_TIMESTEPS = -1
 
   extract_blocks_for_all_hocs(START_PROBLEM_ID, END_PROBLEM_ID, CLIP_TIMESTEPS)
 
