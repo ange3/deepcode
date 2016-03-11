@@ -80,7 +80,7 @@ def extract_asts_for_one_hoc_from_larry_trajectories(hoc_num, clip_traj_bool_by_
     '''
     Extracts a trajectories matrix for one problem as a one-hot encoding of each AST's ID
     Output: (num_trajectories, num_timesteps, num_asts)
-        where 
+        where
             num_trajectories = clipped number of trajectories where trajectory has been seen at least a certain number of times (see get_set_of_trajs_to_remove method),
             num_timesteps = length of the longest trajectory
             num_asts = number of distinct AST IDs in the given trajectories
@@ -159,7 +159,7 @@ def extract_asts_for_one_hoc_from_larry_trajectories(hoc_num, clip_traj_bool_by_
         num_trajectory_length = longest_trajectory_len
     else:
         num_trajectory_length = clip_traj_length
-    trajectories_matrix = np.zeros((num_trajectories, num_trajectory_length, num_ast))  
+    trajectories_matrix = np.zeros((num_trajectories, num_trajectory_length, num_ast))
 
     if verbose:
         num_original = count_total_asts(hoc_num)
@@ -259,9 +259,9 @@ def test_extracted_traj_matrix(hoc_num):
 
     # Print first trajectory in matrix
     print traj_matrix[0, :, :]
-    print 'FOR HOC 3:' 
+    print 'FOR HOC 3:'
     print 'first trajectory is 12'
-    print 'map_ast_id_to_row_index[AST 12] = {}, map_ast_id_to_row_index[AST 0] = {}'.format(map_ast_id_to_row_index['12'], map_ast_id_to_row_index['0'])
+    print 'map_ast_id_to_row_index[AST 12] = {}, map_ast_id_to_row_index[AST 0] = {}'.format(ap_ast_id_to_row_index['12'], map_ast_id_to_row_index['0'])
 
 if __name__ == "__main__":
     START_PROBLEM_ID = 1
@@ -273,7 +273,7 @@ if __name__ == "__main__":
 
     CLIP_TRAJECTORY_LENGTH = 20
 
-    extract_asts_for_all_hocs(START_PROBLEM_ID, END_PROBLEM_ID, CLIP_TRAJECTORY_BOOL, CLIP_TRAJ_FREQ, CLIP_TRAJECTORY_LENGTH, CLIP_NUM_TRAJ)
+    extract_asts_for_all_hocs(START_PROBLEM_ID, END_PROBLEM_ID, CLIP_TRAJECTORY_BOOL, LIP_TRAJ_FREQ, CLIP_TRAJECTORY_LENGTH, CLIP_NUM_TRAJ)
 
     # To test extracted trajectory matrix
     # hoc_num = 3

@@ -1,3 +1,13 @@
+*** INFO: HOC 1 ***
+-- SAVE: Saving Row Index to AST ID map and AST ID to Count map
+Map Row to AST File: ../processed_data_asts/map_row_index_to_ast_id_1.pickle
+Map AST ID to Count File: ../processed_data_asts/map_ast_id_to_count_1.pickle
+-- INFO: AST Matrix: (2561, 156, 6)
+-- SAVE: Saving trajectories matrix and Block ID map
+AST Matrix Filename: ../processed_data_asts/ast_matrix_1.npy
+Map Block String to ID Filename: ../processed_data_asts/map_block_string_to_block_id_1.pickle
+Finished extracting Code Blocks from Problem 1 in 0.149142s
+
 *** INFO: HOC 2 ***
 -- SAVE: Saving Row Index to AST ID map and AST ID to Count map
 Map Row to AST File: ../processed_data_asts/map_row_index_to_ast_id_2.pickle
@@ -17,3 +27,63 @@ Map AST ID to Count File: ../processed_data_asts/map_ast_id_to_count_3.pickle
 AST Matrix Filename: ../processed_data_asts/ast_matrix_3.npy
 Map Block String to ID Filename: ../processed_data_asts/map_block_string_to_block_id_3.pickle
 Finished extracting Code Blocks from Problem 3 in 0.212022s
+
+*** INFO: HOC 4 ***
+-- SAVE: Saving Row Index to AST ID map and AST ID to Count map
+Map Row to AST File: ../processed_data_asts/map_row_index_to_ast_id_4.pickle
+Map AST ID to Count File: ../processed_data_asts/map_ast_id_to_count_4.pickle
+-- INFO: AST Matrix: (3630, 121, 6)
+-- SAVE: Saving trajectories matrix and Block ID map
+AST Matrix Filename: ../processed_data_asts/ast_matrix_4.npy
+Map Block String to ID Filename: ../processed_data_asts/map_block_string_to_block_id_4.pickle
+Finished extracting Code Blocks from Problem 4 in 0.180857s
+
+*** INFO: HOC 5 ***
+-- SAVE: Saving Row Index to AST ID map and AST ID to Count map
+Map Row to AST File: ../processed_data_asts/map_row_index_to_ast_id_5.pickle
+Map AST ID to Count File: ../processed_data_asts/map_ast_id_to_count_5.pickle
+-- INFO: AST Matrix: (12363, 52, 6)
+-- SAVE: Saving trajectories matrix and Block ID map
+AST Matrix Filename: ../processed_data_asts/ast_matrix_5.npy
+Map Block String to ID Filename: ../processed_data_asts/map_block_string_to_block_id_5.pickle
+Finished extracting Code Blocks from Problem 5 in 0.434963s
+
+*** INFO: HOC 6 ***
+-- SAVE: Saving Row Index to AST ID map and AST ID to Count map
+Map Row to AST File: ../processed_data_asts/map_row_index_to_ast_id_6.pickle
+Map AST ID to Count File: ../processed_data_asts/map_ast_id_to_count_6.pickle
+-- INFO: AST Matrix: (2460, 107, 15)
+-- SAVE: Saving trajectories matrix and Block ID map
+AST Matrix Filename: ../processed_data_asts/ast_matrix_6.npy
+Map Block String to ID Filename: ../processed_data_asts/map_block_string_to_block_id_6.pickle
+Finished extracting Code Blocks from Problem 6 in 0.157206s
+
+*** INFO: HOC 7 ***
+-- SAVE: Saving Row Index to AST ID map and AST ID to Count map
+Map Row to AST File: ../processed_data_asts/map_row_index_to_ast_id_7.pickle
+Map AST ID to Count File: ../processed_data_asts/map_ast_id_to_count_7.pickle
+-- INFO: AST Matrix: (5926, 108, 15)
+-- SAVE: Saving trajectories matrix and Block ID map
+AST Matrix Filename: ../processed_data_asts/ast_matrix_7.npy
+Map Block String to ID Filename: ../processed_data_asts/map_block_string_to_block_id_7.pickle
+Finished extracting Code Blocks from Problem 7 in 0.339555s
+
+*** INFO: HOC 8 ***
+-- SAVE: Saving Row Index to AST ID map and AST ID to Count map
+Map Row to AST File: ../processed_data_asts/map_row_index_to_ast_id_8.pickle
+Map AST ID to Count File: ../processed_data_asts/map_ast_id_to_count_8.pickle
+-- INFO: AST Matrix: (16476, 95, 15)
+-- SAVE: Saving trajectories matrix and Block ID map
+AST Matrix Filename: ../processed_data_asts/ast_matrix_8.npy
+Map Block String to ID Filename: ../processed_data_asts/map_block_string_to_block_id_8.pickle
+Finished extracting Code Blocks from Problem 8 in 0.900178s
+
+*** INFO: HOC 9 ***
+-- SAVE: Saving Row Index to AST ID map and AST ID to Count map
+Map Row to AST File: ../processed_data_asts/map_row_index_to_ast_id_9.pickle
+Map AST ID to Count File: ../processed_data_asts/map_ast_id_to_count_9.pickle
+-- INFO: AST Matrix: (50321, 125, 15)
+-- SAVE: Saving trajectories matrix and Block ID map
+AST Matrix Filename: ../processed_data_asts/ast_matrix_9.npy
+Map Block String to ID Filename: ../processed_data_asts/map_block_string_to_block_id_9.pickle
+Finished extracting Code Blocks from Problem 9 in 3.254179s
