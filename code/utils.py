@@ -21,30 +21,11 @@ import numpy as np
 import time
 import pickle
 import random
+from constants import *
 
 
-# Each trajectory matrix corresponds to one hoc exercise and is
-# its own data set. Mixing data sets currently does not make much
-# sense since the AST IDs don't persist betweeen different hoc's.
-TRAJ_MAP = {
-    'hoc1': '../processed_data/traj_matrix_1.npy',
-    'hoc2': '../processed_data/traj_matrix_2.npy',
-    'hoc3': '../processed_data/traj_matrix_3.npy',
-    'hoc4': '../processed_data/traj_matrix_4.npy',
-    'hoc5': '../processed_data/traj_matrix_5.npy',
-    'hoc6': '../processed_data/traj_matrix_6.npy',
-    'hoc7': '../processed_data/traj_matrix_7.npy',
-    'hoc8': '../processed_data/traj_matrix_8.npy',
-    'hoc9': '../processed_data/traj_matrix_9.npy' 
-}
-
-TRAJ_MAP_PREFIX = '../processed_data/traj_matrix_'
-TRAJ_MAP_SUFFIX = '.npy'
-
-
-BLOCK_MAT_PREFIX = '../processed_data/ast_matrix_'
-MAT_SUFFIX = '.npy'
-
+def save_ast_embeddings(ast_embeddings, hoc_num):
+    np.save(AST_EMBEDDINGS_PREFIX + str(hoc_num) + MAT_SUFFIX, ast_embeddings)
 
 # ############################# Batch iterator ###############################
 # This is just a simple helper function iterating over training data in
@@ -55,8 +36,8 @@ MAT_SUFFIX = '.npy'
 # them to GPU at once for slightly improved performance. This would involve
 # several changes in the main program, though, and is not demonstrated here.
 # taken from lasagne mnist example.
-
-def iterate_minibatches(X, next_problem, truth, batchsize, shuffle=False):
+def iterate_minibatches(X, next_problem, truth, batchsize, shuffle=F
+alse):
     assert(X.shape[0] == truth.shape[0])
     assert(X.shape[0] == next_problem.shape[0])
     num_samples = X.shape[0]
@@ -200,6 +181,43 @@ def prepare_traj_data_for_rnn(raw_matrix):
 
     return X, y
 
+def prepare_traj_data_for_rnn_using_embeddings(traj_mat, ast_embeddings, traj_row_to_ast_id_map, embed_ast_id_to_row_map):
+    """
+    inputs: 
+        - raw_matrix of shape (num_traj, max_traj_len, num_asts)
+    outputs:
+        - X, which is the input to the RNN, shape(num_traj, num_timesteps, num_asts)
+        - y: truth vector. shape(num_traj, num_timesteps, num_asts)
+    """
+    (num_traj, max_traj_len, num_asts) = traj_mat.shape
+    # notice that num_timesteps can be at most max_traj_len - 1, since we need 
+    # to be able to predict on the last input and have a truth value.  
+    num_timesteps = max_traj_len - 1
+
+    num_ast_embeddings, embed_dim = ast_embeddings.shape
+    print num_asts
+    print num_ast_embeddings
+
+    X = np.zeros((num_traj, num_timesteps, embed_dim))
+    y = np.zeros((num_traj, num_timesteps))
+    for n in xrange(num_traj):
+        for t in xrange(num_timesteps):
+            ast_row = np.argmax(traj_mat[n,t,:])
+            X[n,t,:] = get_embedding_for_ast(ast_row, ast_embeddings, traj_row_to_ast_id_map, embed_ast_id_to_row_map)
+            y[n,t] = np.argmax(traj_mat[n,t+1,:])
+    return X, y
+
+def get_embedding_for_ast(traj_mat_ast_row, ast_embeddings, traj_row_to_ast_id_map, embed_ast_id_to_row_map):
+    num_ast_embeddings, embed_dim = ast_embeddings.shape
+    ast_id = int(traj_row_to_ast_id_map[traj_mat_ast_row])
+
+    if ast_id != -1:
+        embed_ast_row = int(embed_ast_id_to_row_map[ast_id])
+        return ast_embeddings[embed_ast_row,:].reshape((embed_dim,))
+    else:
+        return np.zeros((embed_dim,))
+
+    
 def prepare_block_data_for_rnn(raw_matrix):
     """
     inputs: 
@@ -218,14 +236,17 @@ def prepare_block_data_for_rnn(raw_matrix):
     num_timesteps = max_ast_len - 1
 
     X = np.copy(raw_matrix[:,:-1,:])
-    mask = np.ones((num_asts, num_timesteps))
+    mask = np.ones((num_asts, num_timesteps)).astype('uint8')
     
     for n in xrange(num_asts):
-        for t in xrange(num_timesteps):
+        for t in xrange(num_timesteps-1):
             # if the ast block sequence already ended (as indicated by dummy block
-            # at index 0, then mask out)
-            if X[n,t,0] == 1:
+            # at index 0, then mask out) We want to predict only up until the
+            # the second to last elem in the sequence
+            if X[n,t+1,0] == 1:
                 mask[n,t] = 0
+        if X[n,num_timesteps-1,0] == 1:
+            mask[n,num_timesteps-1] = 0
 
     # y has shape (num_asts, num_timesteps)
     # and the values are the indices corresponding to the correct ast prediction
@@ -243,7 +264,7 @@ def convert_data_to_ast_ids(data, row_to_ast_id_map):
     INPUT:
     data = (X,y)
     X: (batchsize, num_timesteps, num_asts)
-    y: (batchsize, num_timestep)
+    y: (batchsize, num_timesteps)
 
     OUTPUT:
     X_ast_ids: (batchsize, num_timesteps), containing ast ids, which we can
@@ -263,6 +284,23 @@ def convert_data_to_ast_ids(data, row_to_ast_id_map):
             X_ast_ids[n,t] = row_to_ast_id_map[np.argmax(X[n,t,:])]
 
     return X_ast_ids, y_ast_ids
+
+def convert_truth_to_ast_ids(y, row_to_ast_id_map):
+    '''
+    INPUT:
+    y: (batchsize, num_timesteps)
+
+    OUTPUT:
+    y_ast_ids: (batchsize, num_timesteps)
+    '''
+    batchsize, num_timesteps = y.shape
+    y_ast_ids = np.zeros((batchsize, num_timesteps))
+
+    for n in xrange(batchsize):
+        for t in xrange(num_timesteps):
+            y_ast_ids[n,t] = row_to_ast_id_map[int(y[n,t])]
+
+    return y_ast_ids
 
 def convert_ast_or_block_data_to_ids(X, y, row_to_id_map):
 
@@ -318,7 +356,9 @@ def load_dataset_predict_ast(hoc_num=7, data_sz=-1):
     # Note that ast_index = 0 corresponds to the <END> token,
     # marking that the student has already finished.
     # The <END> token does not correspond to an AST.
-    traj_mat = np.load(TRAJ_MAP[data_set])
+
+    traj_mat_file = TRAJ_MAP_PREFIX + hoc_num + MAT_SUFFIX
+    traj_mat = np.load(traj_mat_file)
 
     # if data_sz specified, reduce matrix. 
     # Useful to create smaller data sets for testing purposes.
@@ -384,7 +424,7 @@ def load_dataset_predict_block(hoc_num=7, data_sz=-1):
     # marking that the student has already finished.
     # The <END> token does not correspond to an AST.
     
-    ast_mat = np.load(BLOCK_MAT_PREFIX + hoc_num + MAT_SUFFIX)
+    ast_mat = np.load(BLOCK_MAT_PREFIX + hoc_num + BLOCK_LIMIT_TIMESTEPS +  MAT_SUFFIX)
 
     # if data_sz specified, reduce matrix. 
     # Useful to create smaller data sets for testing purposes.
@@ -406,10 +446,86 @@ def load_dataset_predict_block(hoc_num=7, data_sz=-1):
     train_data = prepare_block_data_for_rnn(train_mat)
     val_data = prepare_block_data_for_rnn(val_mat)
     test_data = prepare_block_data_for_rnn(test_mat)
+    all_data = prepare_block_data_for_rnn(ast_mat)
 
     num_timesteps = train_data[0].shape[1]
 
     print ("Inputs and targets done!")
     # return train_data, val_data, test_data, block_id_to_row_map, row_to_block_id_map, num_timesteps, num_blocks
-    return train_data, val_data, test_data, num_timesteps, num_blocks
+    return train_data, val_data, test_data, all_data, num_timesteps, num_blocks
 
+def save_ast_embeddings(ast_embeddings, hoc_num):
+    np.save(AST_EMBEDDINGS_PREFIX + str(hoc_num) + MAT_SUFFIX, ast_embeddings)
+
+def load_dataset_predict_ast_using_embeddings(hoc_num=2, data_sz=-1):
+    # if DATA_SZ = -1, use entire data set
+    # For DATA_SZ, powers of 2 work best for performance.
+
+    print('Preparing network inputs and targets, and the ast maps...')
+    hoc_num = str(hoc_num)
+    data_set = 'hoc' + hoc_num
+
+    # trajectories matrix for a single hoc exercise
+    # shape (num_traj, max_traj_len, num_asts)
+    # Note that ast_index = 0 corresponds to the <END> token,
+    # marking that the student has already finished.
+    # The <END> token does not correspond to an AST.
+    traj_mat_file = TRAJ_MAP_PREFIX + hoc_num + MAT_SUFFIX
+    traj_mat = np.load(traj_mat_file)
+    
+    traj_ast_map_file = TRAJ_AST_MAP_PREFIX + hoc_num + MAP_SUFFIX
+    # Load AST ID to Row Map for trajectory matrix
+    traj_ast_id_to_row_map = pickle.load(open( traj_ast_map_file, "rb" ))
+    traj_row_to_ast_id_map = {v: k for k, v in traj_ast_id_to_row_map.items()}
+
+    ast_embeddings = np.load(AST_EMBEDDINGS_PREFIX + str(hoc_num) + MAT_SUFFIX)
+
+    embed_ast_map_file = EMBED_AST_MAP_PREFIX + hoc_num + MAP_SUFFIX
+    embed_row_to_ast_id_map = pickle.load(open(embed_ast_map_file, "rb"))
+    embed_ast_id_to_row_map = {v: k for k, v in embed_row_to_ast_id_map.items()}
+
+    ast_maps = {
+        'traj_id_to_row': traj_ast_id_to_row_map,
+        'traj_row_to_id' : traj_row_to_ast_id_map,
+        'embed_id_to_row' : embed_ast_id_to_row_map,
+        'embed_row_to_id' : embed_row_to_ast_id_map,
+    }
+
+    # if data_sz specified, reduce matrix. 
+    # Useful to create smaller data sets for testing purposes.
+    if data_sz != -1:
+        traj_mat = traj_mat[:data_sz]
+    print 'Trajectory matrix shape {}'.format(traj_mat.shape)
+
+    # shuffle the first dimension of the matrix
+    np.random.shuffle(traj_mat)
+
+    X, y = prepare_traj_data_for_rnn_using_embeddings(traj_mat, ast_embeddings, traj_row_to_ast_id_map, embed_ast_id_to_row_map)
+
+    print ("Inputs and targets done!")
+    return  X, y, ast_maps
+
+def print_sample_program(hoc_num=7, ast_id=0):
+    hoc_num = str(hoc_num)
+    embed_ast_map_file = EMBED_AST_MAP_PREFIX + hoc_num + MAP_SUFFIX
+    embed_row_to_ast_id_map = pickle.load(open(embed_ast_map_file, "rb"))
+    embed_ast_id_to_row_map = {v: k for k, v in embed_row_to_ast_id_map.items()}
+    ast_row = embed_ast_id_to_row_map[ast_id]
+    print 'printing program sequence for hoc {} and ast id {}'.format(hoc_num, ast_id)
+    
+    block_string_to_row_map = pickle.load(open(BLOCK_STRING_TO_BLOCK_ROW_MAP, "rb" ))
+    block_row_to_string_map = {v: k for k, v in block_string_to_row_map.items()}
+    ast_mat = np.load(BLOCK_MAT_PREFIX + hoc_num + BLOCK_LIMIT_TIMESTEPS +  MAT_SUFFIX)
+    num_asts, max_ast_len, num_blocks = ast_mat.shape
+    program = []
+    for t in xrange(max_ast_len):
+        block_row = np.argmax(ast_mat[ast_row,t,:])
+        block_string = block_row_to_string_map[block_row]
+        program.append(block_string)
+    print program
+
+
+
+if __name__ == "__main__":
+    print "You are running utils.py directly, so you must be testing it!"
+    print_sample_program(hoc_num=1,ast_id=1)

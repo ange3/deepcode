@@ -229,60 +229,8 @@ def compute_corrected_acc_on_ast_ids(X_ast_ids, truth_ast_ids, pred_ast_ids):
     return corrected_acc
 
 
-# def get_predicted_ast_ids(pred, truth, row_to_ast_id_map):
-#     '''
-#     Takes in a prediction matrix and returns the predicted AST ID at each sample and each timestep 
 
-#     pred: (batchsize, num_timesteps, num_asts)
-#     truth: (batchsize, num_timesteps)
-
-#     pred_output: (batchsize, num_timesteps)
-#     '''
-
-#     batchsize, num_timesteps, num_asts = pred.shape
-#     pred_output = np.zeros((batchsize, num_timesteps))
-#     truth_output = np.zeros((batchsize, num_timesteps))
-
-#     for n in xrange(batchsize):
-#         for t in xrange(num_timesteps):
-#             pred_output[n,t] = row_to_ast_id_map[np.argmax(pred[n,t,:])]
-#             truth_output[n,t] = row_to_ast_id_map[int(truth[n,t])]
-
-#     return pred_output, truth_output
-
-# def get_predicted_ast_ids_and_corrected_acc(X, truth, pred, row_to_ast_id_map):
-#     '''
-#     Takes in a prediction matrix and returns the predicted AST ID at each sample and each timestep 
-
-#     pred: (batchsize, num_timesteps, num_asts)
-#     truth: (batchsize, num_timesteps)
-
-#     pred_output: (batchsize, num_timesteps) with values corresponding to the 
-#             actual ast ids, which we can use to look up the ast json files.
-#     truth_output: (batchsize, num_timesteps) with values corresponding to the 
-#             actual ast ids, which we can use to look up the ast json files.
-#     corrected_acc: By ignoring predictions on <END> tokens except the 
-#             of the first <END> token in each sequence, we get the corrected accuracy.
-#     '''
-
-#     X_ast_ids, truth_ast_ids = utils.convert_data_to_ast_ids((X, truth), row_to_ast_id_map)
-#     pred_ast_ids = utils.convert_pred_to_ast_ids(pred, row_to_ast_id_map)
-#     batchsize, num_timesteps, num_asts = pred.shape
-
-#     correct_count = 0
-#     total_count = 0
-#     for n in xrange(batchsize):
-#         for t in xrange(num_timesteps):
-#             if X_ast_ids[n,t] != -1:
-#                 total_count += 1
-#                 if pred_ast_ids[n,t] == truth_ast_ids[n,t]:
-#                     correct_count += 1
-#     corrected_acc = correct_count/float(total_count)
-#     return X_ast_ids, pred_ast_ids, truth_ast_ids, corrected_acc
-
-
-
-def check_accuracy(data, compute_loss_acc, row_to_ast_id_map, dataset_name):
+def check_accuracy(data, compute_loss_acc, dataset_name):
     X, truth = data
     print("Testing...")
     # After training, we compute and print the test error:
