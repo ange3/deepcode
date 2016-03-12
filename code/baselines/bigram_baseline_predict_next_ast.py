@@ -59,15 +59,15 @@ code_org_data_bigrams_guess_unweighted_map = {
 }
 
 code_org_data_bigrams_guess_weighted_map = {
-    1 : "../../data/bigrams/AST_guesses_weighted_1.csv",
-    2 : "../../data/bigrams/AST_guesses_weighted_2.csv",
-    3 : "../../data/bigrams/AST_guesses_weighted_3.csv",
-    4 : "../../data/bigrams/AST_guesses_weighted_4.csv",
-    5 : "../../data/bigrams/AST_guesses_weighted_5.csv",
-    6 : "../../data/bigrams/AST_guesses_weighted_6.csv",
-    7 : "../../data/bigrams/AST_guesses_weighted_7.csv",
-    8 : "../../data/bigrams/AST_guesses_weighted_8.csv",
-    9 : "../../data/bigrams/AST_guesses_weighted_9.csv",
+    1 : "../../data/bigrams/AST_guesses_weighted_with_end_token_1.csv",
+    2 : "../../data/bigrams/AST_guesses_weighted_with_end_token_2.csv",
+    3 : "../../data/bigrams/AST_guesses_weighted_with_end_token_3.csv",
+    4 : "../../data/bigrams/AST_guesses_weighted_with_end_token_4.csv",
+    5 : "../../data/bigrams/AST_guesses_weighted_with_end_token_5.csv",
+    6 : "../../data/bigrams/AST_guesses_weighted_with_end_token_6.csv",
+    7 : "../../data/bigrams/AST_guesses_weighted_with_end_token_7.csv",
+    8 : "../../data/bigrams/AST_guesses_weighted_with_end_token_8.csv",
+    9 : "../../data/bigrams/AST_guesses_weighted_with_end_token_9.csv",
 }
 
 # Actual trajectories
@@ -95,6 +95,7 @@ trajectory_count_map = {
   9: "../../data/trajectory_count_files/counts_9.txt",
 }
 
+END_TOKEN = -1
 
 def predict_accuracy(DATA_SET_HOC, DATA_SZ_LIST, weighted_bigrams_bool = True, use_bigrams_prediction_bool = True):
   '''
@@ -155,8 +156,13 @@ def predict_accuracy(DATA_SET_HOC, DATA_SZ_LIST, weighted_bigrams_bool = True, u
         else:
           traj_count = 1
         line = line[1:] # ignore first element which is the trajectory ID
-        for timestep, ast in enumerate(line):
-          ast = int(ast)
+        line = np.unique(line)  # ignore consecutive duplicate ASTs in trajectory
+        # Iterate through every timestep and compare predicted AST (predicted from previous AST) with actual AST. Including prediction of the end token.
+        for timestep in xrange(len(line)+1):
+          if timestep == len(line):
+            ast = END_TOKEN  # artificially insert end token at last timestep for correct solution
+          else:
+            ast = int(line[timestep])
           if timestep == 0:  # no prediction for first timestep
             pass
           else:
@@ -186,11 +192,26 @@ def predict_accuracy(DATA_SET_HOC, DATA_SZ_LIST, weighted_bigrams_bool = True, u
     print 'Total: ', total_count
     print 'Accuracy: ', accuracy
 
+  return accuracy
+
 
 if __name__ == "__main__":
-  DATA_SET_HOC = 7
-  DATA_SZ_LIST = [100, 1000, 10000, 100000]
 
-  predict_accuracy(DATA_SET_HOC, DATA_SZ_LIST, weighted_bigrams_bool = True, use_bigrams_prediction_bool = True)
+  START_HOC = 1
+  END_HOC = 9
+
+  DATA_SET_HOC = xrange(START_HOC, END_HOC+1)
+  # DATA_SZ_LIST = [100, 1000, 10000, 100000]
+  DATA_SZ_LIST = [100000]
+
+  acc_list = []
+  for hoc in DATA_SET_HOC:
+    acc = predict_accuracy(hoc, DATA_SZ_LIST, weighted_bigrams_bool = True, use_bigrams_prediction_bool = True)
+    acc_list.append(acc)
+
+  print '*' * 20
+  print 'List of accuracies'
+  print 'HOC numbers:', START_HOC, ' to ', END_HOC
+  print 'Bigram Accuracies:', acc_list
 
 

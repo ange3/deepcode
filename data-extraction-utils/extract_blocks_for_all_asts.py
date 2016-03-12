@@ -27,13 +27,15 @@ AST_TO_BLOCKS_FILENAME_PRE = 'AST_to_blocks_'
 AST_TO_BLOCKS_FILENAME_POST = '.csv'
 
 PATH_TO_PROCESSED_DATA = '../processed_data_asts/'
+LOAD_MAP_BLOCK_STRING_TO_BLOCK_ID_FILE = '../processed_data_asts/map_block_string_to_block_id_1.pickle'
+# LOAD_MAP_BLOCK_STRING_TO_BLOCK_ID_FILE = None
 
 BLOCK_ID_FOR_END_TOKEN = 0
-BLOCK_STRING_FOR_END_TOKEN = '-1'
+BLOCK_STRING_FOR_END_TOKEN = 'no_block'
 
 
 
-def extract_blocks_for_one_hoc(hoc_num, clip_timesteps = -1, verbose = True, save_traj_matrix = True):
+def extract_blocks_for_one_hoc(hoc_num, clip_timesteps = -1, map_code_block_string_to_block_id = None, verbose = True, save_traj_matrix = True):
   '''
   Extracts a trajectories matrix for one problem as a one-hot encoding of each code block
   Output: (num_asts, num_timesteps, num_code_blocks)
@@ -49,8 +51,10 @@ def extract_blocks_for_one_hoc(hoc_num, clip_timesteps = -1, verbose = True, sav
   # Maps to save data
   map_ast_id_to_count = {}
   map_row_index_to_ast_id = {}
-  map_code_block_string_to_block_id = {}
-  map_code_block_string_to_block_id[BLOCK_STRING_FOR_END_TOKEN] = BLOCK_ID_FOR_END_TOKEN  # after end of last line of code
+  if map_code_block_string_to_block_id is None:
+    # Setup map: {block string => block ID} if not pre-loaded
+    map_code_block_string_to_block_id = {}
+    map_code_block_string_to_block_id[BLOCK_STRING_FOR_END_TOKEN] = BLOCK_ID_FOR_END_TOKEN  # after end of last line of code
   map_row_ast_filename = PATH_TO_PROCESSED_DATA + 'map_row_index_to_ast_id_' + str(hoc_num) + '.pickle'
   map_ast_count_filename = PATH_TO_PROCESSED_DATA + 'map_ast_id_to_count_' + str(hoc_num) + '.pickle'
   map_block_string_to_id_filename = PATH_TO_PROCESSED_DATA + 'map_block_string_to_block_id_' + str(hoc_num) + '.pickle'
@@ -103,6 +107,9 @@ def extract_blocks_for_one_hoc(hoc_num, clip_timesteps = -1, verbose = True, sav
 
   for ast_index, ast in enumerate(raw_asts_list):
     for timestep, code_block_string in enumerate(ast):
+      # Skip blocks that are integers and not commands
+      if code_block_string.isdigit():
+        continue
       # Get block ID
       if code_block_string not in map_code_block_string_to_block_id:
         map_code_block_string_to_block_id[code_block_string] = len(map_code_block_string_to_block_id)
@@ -125,6 +132,10 @@ def extract_blocks_for_one_hoc(hoc_num, clip_timesteps = -1, verbose = True, sav
     # Save
     np.save(ast_matrix_filename, ast_matrix)
     pickle.dump(map_code_block_string_to_block_id, open( map_block_string_to_id_filename, "wb" ))
+    print '--' * 10
+    print 'HOC', str(hoc_num)
+    print map_code_block_string_to_block_id
+    print '--' * 10
 
 
 def extract_blocks_for_all_hocs(start_problem_id, end_problem_id, clip_timesteps = -1, verbose=True):
@@ -132,13 +143,16 @@ def extract_blocks_for_all_hocs(start_problem_id, end_problem_id, clip_timesteps
   Extracts trajectories matrix code blocks for all problems from START_PROBLEM_ID to END_PROBLEM_ID inclusive.
   Saves trajectories matrices to a numpy file and code block name to row index maps to a pickle file.
   '''
-
+  if LOAD_MAP_BLOCK_STRING_TO_BLOCK_ID_FILE:
+    map_code_block_string_to_block_id = pickle.load(open(LOAD_MAP_BLOCK_STRING_TO_BLOCK_ID_FILE, 'rb'))
+  else:
+    map_code_block_string_to_block_id = None
   for hoc_num in xrange(start_problem_id, end_problem_id + 1):
     if verbose:
         print '*** INFO: HOC {} ***'.format(hoc_num)
 
     tic = time.clock()
-    extract_blocks_for_one_hoc(hoc_num, clip_timesteps)
+    extract_blocks_for_one_hoc(hoc_num, clip_timesteps, map_code_block_string_to_block_id)
     toc = time.clock()
 
     if verbose:
@@ -180,9 +194,9 @@ def test_extracted_ast_matrix(hoc_num):
 
 
 if __name__ == "__main__":
-  START_PROBLEM_ID = 6
+  START_PROBLEM_ID = 1
   END_PROBLEM_ID = 9
-  CLIP_TIMESTEPS = -1
+  CLIP_TIMESTEPS = 20
 
   extract_blocks_for_all_hocs(START_PROBLEM_ID, END_PROBLEM_ID, CLIP_TIMESTEPS)
 
