@@ -1,89 +1,243 @@
+VERSION 1. NOT CLIPPING TIMESTEPS
+
+rescomp-15-266180:data-extraction-utils angelasy$ python extract_blocks_for_all_asts.py
 *** INFO: HOC 1 ***
 -- SAVE: Saving Row Index to AST ID map and AST ID to Count map
 Map Row to AST File: ../processed_data_asts/map_row_index_to_ast_id_1.pickle
 Map AST ID to Count File: ../processed_data_asts/map_ast_id_to_count_1.pickle
--- INFO: AST Matrix: (2561, 156, 6)
+-- INFO: AST Matrix: (2561, 156, 8)
 -- SAVE: Saving trajectories matrix and Block ID map
 AST Matrix Filename: ../processed_data_asts/ast_matrix_1.npy
 Map Block String to ID Filename: ../processed_data_asts/map_block_string_to_block_id_1.pickle
-Finished extracting Code Blocks from Problem 1 in 0.149142s
-
+--------------------
+HOC 1
+{'end_program': 3, 'no_block': 0, 'maze_turnLeft': 5, 'maze_moveForward': 2, 'maze_turnRight': 4, 'program': 1, 'end_loop': 7, 'controls_repeat': 6}
+--------------------
+Finished extracting Code Blocks from Problem 1 in 0.17031s
 *** INFO: HOC 2 ***
 -- SAVE: Saving Row Index to AST ID map and AST ID to Count map
 Map Row to AST File: ../processed_data_asts/map_row_index_to_ast_id_2.pickle
 Map AST ID to Count File: ../processed_data_asts/map_ast_id_to_count_2.pickle
--- INFO: AST Matrix: (2314, 82, 6)
+-- INFO: AST Matrix: (2314, 82, 8)
 -- SAVE: Saving trajectories matrix and Block ID map
 AST Matrix Filename: ../processed_data_asts/ast_matrix_2.npy
 Map Block String to ID Filename: ../processed_data_asts/map_block_string_to_block_id_2.pickle
-Finished extracting Code Blocks from Problem 2 in 0.105709s
-
+--------------------
+HOC 2
+{'end_program': 3, 'no_block': 0, 'maze_turnLeft': 5, 'maze_moveForward': 2, 'maze_turnRight': 4, 'program': 1, 'end_loop': 7, 'controls_repeat': 6}
+--------------------
+Finished extracting Code Blocks from Problem 2 in 0.110501s
 *** INFO: HOC 3 ***
 -- SAVE: Saving Row Index to AST ID map and AST ID to Count map
 Map Row to AST File: ../processed_data_asts/map_row_index_to_ast_id_3.pickle
 Map AST ID to Count File: ../processed_data_asts/map_ast_id_to_count_3.pickle
--- INFO: AST Matrix: (3899, 123, 6)
+-- INFO: AST Matrix: (3899, 123, 8)
 -- SAVE: Saving trajectories matrix and Block ID map
 AST Matrix Filename: ../processed_data_asts/ast_matrix_3.npy
 Map Block String to ID Filename: ../processed_data_asts/map_block_string_to_block_id_3.pickle
-Finished extracting Code Blocks from Problem 3 in 0.212022s
-
+--------------------
+HOC 3
+{'end_program': 3, 'no_block': 0, 'maze_turnLeft': 5, 'maze_moveForward': 2, 'maze_turnRight': 4, 'program': 1, 'end_loop': 7, 'controls_repeat': 6}
+--------------------
+Finished extracting Code Blocks from Problem 3 in 0.234853s
 *** INFO: HOC 4 ***
 -- SAVE: Saving Row Index to AST ID map and AST ID to Count map
 Map Row to AST File: ../processed_data_asts/map_row_index_to_ast_id_4.pickle
 Map AST ID to Count File: ../processed_data_asts/map_ast_id_to_count_4.pickle
--- INFO: AST Matrix: (3630, 121, 6)
+-- INFO: AST Matrix: (3630, 121, 8)
 -- SAVE: Saving trajectories matrix and Block ID map
 AST Matrix Filename: ../processed_data_asts/ast_matrix_4.npy
 Map Block String to ID Filename: ../processed_data_asts/map_block_string_to_block_id_4.pickle
-Finished extracting Code Blocks from Problem 4 in 0.180857s
-
+--------------------
+HOC 4
+{'end_program': 3, 'no_block': 0, 'maze_turnLeft': 5, 'maze_moveForward': 2, 'maze_turnRight': 4, 'program': 1, 'end_loop': 7, 'controls_repeat': 6}
+--------------------
+Finished extracting Code Blocks from Problem 4 in 0.182152s
 *** INFO: HOC 5 ***
 -- SAVE: Saving Row Index to AST ID map and AST ID to Count map
 Map Row to AST File: ../processed_data_asts/map_row_index_to_ast_id_5.pickle
 Map AST ID to Count File: ../processed_data_asts/map_ast_id_to_count_5.pickle
--- INFO: AST Matrix: (12363, 52, 6)
+-- INFO: AST Matrix: (12363, 52, 8)
 -- SAVE: Saving trajectories matrix and Block ID map
 AST Matrix Filename: ../processed_data_asts/ast_matrix_5.npy
 Map Block String to ID Filename: ../processed_data_asts/map_block_string_to_block_id_5.pickle
-Finished extracting Code Blocks from Problem 5 in 0.434963s
-
+--------------------
+HOC 5
+{'end_program': 3, 'no_block': 0, 'maze_turnLeft': 5, 'maze_moveForward': 2, 'maze_turnRight': 4, 'program': 1, 'end_loop': 7, 'controls_repeat': 6}
+--------------------
+Finished extracting Code Blocks from Problem 5 in 0.505539s
 *** INFO: HOC 6 ***
 -- SAVE: Saving Row Index to AST ID map and AST ID to Count map
 Map Row to AST File: ../processed_data_asts/map_row_index_to_ast_id_6.pickle
 Map AST ID to Count File: ../processed_data_asts/map_ast_id_to_count_6.pickle
--- INFO: AST Matrix: (2460, 107, 15)
+-- INFO: AST Matrix: (2460, 106, 8)
 -- SAVE: Saving trajectories matrix and Block ID map
 AST Matrix Filename: ../processed_data_asts/ast_matrix_6.npy
 Map Block String to ID Filename: ../processed_data_asts/map_block_string_to_block_id_6.pickle
-Finished extracting Code Blocks from Problem 6 in 0.157206s
-
+--------------------
+HOC 6
+{'end_program': 3, 'no_block': 0, 'maze_turnLeft': 5, 'maze_moveForward': 2, 'maze_turnRight': 4, 'program': 1, 'end_loop': 7, 'controls_repeat': 6}
+--------------------
+Finished extracting Code Blocks from Problem 6 in 0.152563s
 *** INFO: HOC 7 ***
 -- SAVE: Saving Row Index to AST ID map and AST ID to Count map
 Map Row to AST File: ../processed_data_asts/map_row_index_to_ast_id_7.pickle
 Map AST ID to Count File: ../processed_data_asts/map_ast_id_to_count_7.pickle
--- INFO: AST Matrix: (5926, 108, 15)
+-- INFO: AST Matrix: (5926, 106, 8)
 -- SAVE: Saving trajectories matrix and Block ID map
 AST Matrix Filename: ../processed_data_asts/ast_matrix_7.npy
 Map Block String to ID Filename: ../processed_data_asts/map_block_string_to_block_id_7.pickle
-Finished extracting Code Blocks from Problem 7 in 0.339555s
-
+--------------------
+HOC 7
+{'end_program': 3, 'no_block': 0, 'maze_turnLeft': 5, 'maze_moveForward': 2, 'maze_turnRight': 4, 'program': 1, 'end_loop': 7, 'controls_repeat': 6}
+--------------------
+Finished extracting Code Blocks from Problem 7 in 0.255827s
 *** INFO: HOC 8 ***
 -- SAVE: Saving Row Index to AST ID map and AST ID to Count map
 Map Row to AST File: ../processed_data_asts/map_row_index_to_ast_id_8.pickle
 Map AST ID to Count File: ../processed_data_asts/map_ast_id_to_count_8.pickle
--- INFO: AST Matrix: (16476, 95, 15)
+-- INFO: AST Matrix: (16476, 94, 8)
 -- SAVE: Saving trajectories matrix and Block ID map
 AST Matrix Filename: ../processed_data_asts/ast_matrix_8.npy
 Map Block String to ID Filename: ../processed_data_asts/map_block_string_to_block_id_8.pickle
-Finished extracting Code Blocks from Problem 8 in 0.900178s
-
+--------------------
+HOC 8
+{'end_program': 3, 'no_block': 0, 'maze_turnLeft': 5, 'maze_moveForward': 2, 'maze_turnRight': 4, 'program': 1, 'end_loop': 7, 'controls_repeat': 6}
+--------------------
+Finished extracting Code Blocks from Problem 8 in 0.823765s
 *** INFO: HOC 9 ***
 -- SAVE: Saving Row Index to AST ID map and AST ID to Count map
 Map Row to AST File: ../processed_data_asts/map_row_index_to_ast_id_9.pickle
 Map AST ID to Count File: ../processed_data_asts/map_ast_id_to_count_9.pickle
--- INFO: AST Matrix: (50321, 125, 15)
+-- INFO: AST Matrix: (50321, 94, 8)
 -- SAVE: Saving trajectories matrix and Block ID map
 AST Matrix Filename: ../processed_data_asts/ast_matrix_9.npy
 Map Block String to ID Filename: ../processed_data_asts/map_block_string_to_block_id_9.pickle
-Finished extracting Code Blocks from Problem 9 in 3.254179s
+--------------------
+HOC 9
+{'end_program': 3, 'no_block': 0, 'maze_turnLeft': 5, 'maze_moveForward': 2, 'maze_turnRight': 4, 'program': 1, 'end_loop': 7, 'controls_repeat': 6}
+--------------------
+Finished extracting Code Blocks from Problem 9 in 2.408921s
+
+
+
+VERSION 2. CLIPPING TIMESTEPS AT 20 TIMESTEPS
+
+rescomp-15-266180:data-extraction-utils angelasy$ python extract_blocks_for_all_asts.py
+*** INFO: HOC 1 ***
+-- SAVE: Saving Row Index to AST ID map and AST ID to Count map
+Map Row to AST File: ../processed_data_asts/map_row_index_to_ast_id_1.pickle
+Map AST ID to Count File: ../processed_data_asts/map_ast_id_to_count_1.pickle
+-- INFO: AST Matrix: (2561, 20, 8)
+-- SAVE: Saving trajectories matrix and Block ID map
+AST Matrix Filename: ../processed_data_asts/ast_matrix_1_timesteps_20.npy
+Map Block String to ID Filename: ../processed_data_asts/map_block_string_to_block_id_1.pickle
+--------------------
+HOC 1
+{'end_program': 3, 'no_block': 0, 'maze_turnLeft': 5, 'maze_moveForward': 2, 'maze_turnRight': 4, 'program': 1, 'end_loop': 7, 'controls_repeat': 6}
+--------------------
+Finished extracting Code Blocks from Problem 1 in 0.105202s
+*** INFO: HOC 2 ***
+-- SAVE: Saving Row Index to AST ID map and AST ID to Count map
+Map Row to AST File: ../processed_data_asts/map_row_index_to_ast_id_2.pickle
+Map AST ID to Count File: ../processed_data_asts/map_ast_id_to_count_2.pickle
+-- INFO: AST Matrix: (2314, 20, 8)
+-- SAVE: Saving trajectories matrix and Block ID map
+AST Matrix Filename: ../processed_data_asts/ast_matrix_2_timesteps_20.npy
+Map Block String to ID Filename: ../processed_data_asts/map_block_string_to_block_id_2.pickle
+--------------------
+HOC 2
+{'end_program': 3, 'no_block': 0, 'maze_turnLeft': 5, 'maze_moveForward': 2, 'maze_turnRight': 4, 'program': 1, 'end_loop': 7, 'controls_repeat': 6}
+--------------------
+Finished extracting Code Blocks from Problem 2 in 0.075216s
+*** INFO: HOC 3 ***
+-- SAVE: Saving Row Index to AST ID map and AST ID to Count map
+Map Row to AST File: ../processed_data_asts/map_row_index_to_ast_id_3.pickle
+Map AST ID to Count File: ../processed_data_asts/map_ast_id_to_count_3.pickle
+-- INFO: AST Matrix: (3899, 20, 8)
+-- SAVE: Saving trajectories matrix and Block ID map
+AST Matrix Filename: ../processed_data_asts/ast_matrix_3_timesteps_20.npy
+Map Block String to ID Filename: ../processed_data_asts/map_block_string_to_block_id_3.pickle
+--------------------
+HOC 3
+{'end_program': 3, 'no_block': 0, 'maze_turnLeft': 5, 'maze_moveForward': 2, 'maze_turnRight': 4, 'program': 1, 'end_loop': 7, 'controls_repeat': 6}
+--------------------
+Finished extracting Code Blocks from Problem 3 in 0.136046s
+*** INFO: HOC 4 ***
+-- SAVE: Saving Row Index to AST ID map and AST ID to Count map
+Map Row to AST File: ../processed_data_asts/map_row_index_to_ast_id_4.pickle
+Map AST ID to Count File: ../processed_data_asts/map_ast_id_to_count_4.pickle
+-- INFO: AST Matrix: (3630, 20, 8)
+-- SAVE: Saving trajectories matrix and Block ID map
+AST Matrix Filename: ../processed_data_asts/ast_matrix_4_timesteps_20.npy
+Map Block String to ID Filename: ../processed_data_asts/map_block_string_to_block_id_4.pickle
+--------------------
+HOC 4
+{'end_program': 3, 'no_block': 0, 'maze_turnLeft': 5, 'maze_moveForward': 2, 'maze_turnRight': 4, 'program': 1, 'end_loop': 7, 'controls_repeat': 6}
+--------------------
+Finished extracting Code Blocks from Problem 4 in 0.121331s
+*** INFO: HOC 5 ***
+-- SAVE: Saving Row Index to AST ID map and AST ID to Count map
+Map Row to AST File: ../processed_data_asts/map_row_index_to_ast_id_5.pickle
+Map AST ID to Count File: ../processed_data_asts/map_ast_id_to_count_5.pickle
+-- INFO: AST Matrix: (12363, 20, 8)
+-- SAVE: Saving trajectories matrix and Block ID map
+AST Matrix Filename: ../processed_data_asts/ast_matrix_5_timesteps_20.npy
+Map Block String to ID Filename: ../processed_data_asts/map_block_string_to_block_id_5.pickle
+--------------------
+HOC 5
+{'end_program': 3, 'no_block': 0, 'maze_turnLeft': 5, 'maze_moveForward': 2, 'maze_turnRight': 4, 'program': 1, 'end_loop': 7, 'controls_repeat': 6}
+--------------------
+Finished extracting Code Blocks from Problem 5 in 0.428885s
+*** INFO: HOC 6 ***
+-- SAVE: Saving Row Index to AST ID map and AST ID to Count map
+Map Row to AST File: ../processed_data_asts/map_row_index_to_ast_id_6.pickle
+Map AST ID to Count File: ../processed_data_asts/map_ast_id_to_count_6.pickle
+-- INFO: AST Matrix: (2460, 20, 8)
+-- SAVE: Saving trajectories matrix and Block ID map
+AST Matrix Filename: ../processed_data_asts/ast_matrix_6_timesteps_20.npy
+Map Block String to ID Filename: ../processed_data_asts/map_block_string_to_block_id_6.pickle
+--------------------
+HOC 6
+{'end_program': 3, 'no_block': 0, 'maze_turnLeft': 5, 'maze_moveForward': 2, 'maze_turnRight': 4, 'program': 1, 'end_loop': 7, 'controls_repeat': 6}
+--------------------
+Finished extracting Code Blocks from Problem 6 in 0.092059s
+*** INFO: HOC 7 ***
+-- SAVE: Saving Row Index to AST ID map and AST ID to Count map
+Map Row to AST File: ../processed_data_asts/map_row_index_to_ast_id_7.pickle
+Map AST ID to Count File: ../processed_data_asts/map_ast_id_to_count_7.pickle
+-- INFO: AST Matrix: (5926, 20, 8)
+-- SAVE: Saving trajectories matrix and Block ID map
+AST Matrix Filename: ../processed_data_asts/ast_matrix_7_timesteps_20.npy
+Map Block String to ID Filename: ../processed_data_asts/map_block_string_to_block_id_7.pickle
+--------------------
+HOC 7
+{'end_program': 3, 'no_block': 0, 'maze_turnLeft': 5, 'maze_moveForward': 2, 'maze_turnRight': 4, 'program': 1, 'end_loop': 7, 'controls_repeat': 6}
+--------------------
+Finished extracting Code Blocks from Problem 7 in 0.223182s
+*** INFO: HOC 8 ***
+-- SAVE: Saving Row Index to AST ID map and AST ID to Count map
+Map Row to AST File: ../processed_data_asts/map_row_index_to_ast_id_8.pickle
+Map AST ID to Count File: ../processed_data_asts/map_ast_id_to_count_8.pickle
+-- INFO: AST Matrix: (16476, 20, 8)
+-- SAVE: Saving trajectories matrix and Block ID map
+AST Matrix Filename: ../processed_data_asts/ast_matrix_8_timesteps_20.npy
+Map Block String to ID Filename: ../processed_data_asts/map_block_string_to_block_id_8.pickle
+--------------------
+HOC 8
+{'end_program': 3, 'no_block': 0, 'maze_turnLeft': 5, 'maze_moveForward': 2, 'maze_turnRight': 4, 'program': 1, 'end_loop': 7, 'controls_repeat': 6}
+--------------------
+Finished extracting Code Blocks from Problem 8 in 0.56982s
+*** INFO: HOC 9 ***
+-- SAVE: Saving Row Index to AST ID map and AST ID to Count map
+Map Row to AST File: ../processed_data_asts/map_row_index_to_ast_id_9.pickle
+Map AST ID to Count File: ../processed_data_asts/map_ast_id_to_count_9.pickle
+-- INFO: AST Matrix: (50321, 20, 8)
+-- SAVE: Saving trajectories matrix and Block ID map
+AST Matrix Filename: ../processed_data_asts/ast_matrix_9_timesteps_20.npy
+Map Block String to ID Filename: ../processed_data_asts/map_block_string_to_block_id_9.pickle
+--------------------
+HOC 9
+{'end_program': 3, 'no_block': 0, 'maze_turnLeft': 5, 'maze_moveForward': 2, 'maze_turnRight': 4, 'program': 1, 'end_loop': 7, 'controls_repeat': 6}
+--------------------
+Finished extracting Code Blocks from Problem 9 in 2.083314s

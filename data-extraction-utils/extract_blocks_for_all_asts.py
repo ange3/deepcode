@@ -8,7 +8,23 @@
 #==============================================================================
 # DESCRIPTION: Extract matrix of code blocks represented as one-hot encodings.
 #   (num_trajectories, num_timesteps, num_code_blocks)
+#
+#   Code command strings (code blocks) are transformed into command IDs (block IDs) 
+#     corresponding to their row position in the block one-hot encoding.
+#   Furthermore, for loop counts are ignored and a 'no_block' token is added for all 
+#     timesteps after the end of a program (necessary since we are imposing a set number
+#     of timesteps for each program).
 # 
+#   We use the following block string to block ID mapping as defined in the file 
+#     processed_data_asts/map_block_string_to_block_id_master.pickle
+#      {'controls_repeat': 6,
+#       'end_loop': 7,
+#       'end_program': 3,
+#       'maze_moveForward': 2,
+#       'maze_turnLeft': 5,
+#       'maze_turnRight': 4,
+#       'no_block': 0,
+#       'program': 1}
 #==============================================================================
 # CURRENT STATUS: In progress/ working! :) 
 #==============================================================================
@@ -27,12 +43,11 @@ AST_TO_BLOCKS_FILENAME_PRE = 'AST_to_blocks_'
 AST_TO_BLOCKS_FILENAME_POST = '.csv'
 
 PATH_TO_PROCESSED_DATA = '../processed_data_asts/'
-LOAD_MAP_BLOCK_STRING_TO_BLOCK_ID_FILE = '../processed_data_asts/map_block_string_to_block_id_1.pickle'
+LOAD_MAP_BLOCK_STRING_TO_BLOCK_ID_FILE = '../processed_data_asts/map_block_string_to_block_id_master.pickle'
 # LOAD_MAP_BLOCK_STRING_TO_BLOCK_ID_FILE = None
 
 BLOCK_ID_FOR_END_TOKEN = 0
 BLOCK_STRING_FOR_END_TOKEN = 'no_block'
-
 
 
 def extract_blocks_for_one_hoc(hoc_num, clip_timesteps = -1, map_code_block_string_to_block_id = None, verbose = True, save_traj_matrix = True):
@@ -51,18 +66,17 @@ def extract_blocks_for_one_hoc(hoc_num, clip_timesteps = -1, map_code_block_stri
   # Maps to save data
   map_ast_id_to_count = {}
   map_row_index_to_ast_id = {}
-  if map_code_block_string_to_block_id is None:
-    # Setup map: {block string => block ID} if not pre-loaded
-    map_code_block_string_to_block_id = {}
-    map_code_block_string_to_block_id[BLOCK_STRING_FOR_END_TOKEN] = BLOCK_ID_FOR_END_TOKEN  # after end of last line of code
   map_row_ast_filename = PATH_TO_PROCESSED_DATA + 'map_row_index_to_ast_id_' + str(hoc_num) + '.pickle'
   map_ast_count_filename = PATH_TO_PROCESSED_DATA + 'map_ast_id_to_count_' + str(hoc_num) + '.pickle'
   map_block_string_to_id_filename = PATH_TO_PROCESSED_DATA + 'map_block_string_to_block_id_' + str(hoc_num) + '.pickle'
 
   # Setup data structures
-  raw_asts_list = []
+  clean_asts_list = []
   longest_ast_len = -1
-  unique_code_blocks_set = set()
+  if map_code_block_string_to_block_id is None:
+    # Setup map: {block string => block ID} if not pre-loaded
+    map_code_block_string_to_block_id = {}
+    map_code_block_string_to_block_id[BLOCK_STRING_FOR_END_TOKEN] = BLOCK_ID_FOR_END_TOKEN  # after end of last line of code
 
   # Process file and save maps
   with open(filepath, 'rb') as ast_file:
@@ -70,17 +84,36 @@ def extract_blocks_for_one_hoc(hoc_num, clip_timesteps = -1, map_code_block_stri
       ast_id = int(line[0])
       ast_count = int(line[1])
       raw_ast = line[2:]
-      if clip_timesteps != -1:
-        raw_ast = raw_ast[:clip_timesteps]
+
+      # Test AST
+      # test_ast_id = 0
+      # if ast_id == test_ast_id:
+      #   test_ast_row = index
+      #   print 'TESTING'
+      #   print 'AST', ast_id
+      #   print 'Raw Trajectory'
+      #   print raw_ast
 
       map_ast_id_to_count[ast_id] = ast_count
       map_row_index_to_ast_id[index] = ast_id
-      raw_asts_list.append(raw_ast)
-      if len(raw_ast) > longest_ast_len:
-        longest_ast_len = len(raw_ast)
+      clean_ast = []
       for code_block in raw_ast:
-        unique_code_blocks_set.add(code_block)
-    
+        if not code_block.isdigit():
+          clean_ast.append(code_block)
+
+      if len(clean_ast) > longest_ast_len:
+        longest_ast_len = len(clean_ast)
+
+      if clip_timesteps != -1:
+        clean_ast = clean_ast[:clip_timesteps]
+
+      clean_asts_list.append(clean_ast)
+
+      # Test AST
+      # if ast_id == test_ast_id:
+      #   test_ast_row = index
+      #   print 'Clean Trajectory clipped'
+      #   print clean_ast
 
     if verbose:
       print '-- SAVE: Saving Row Index to AST ID map and AST ID to Count map'
@@ -98,25 +131,45 @@ def extract_blocks_for_one_hoc(hoc_num, clip_timesteps = -1, map_code_block_stri
 
 
   # Create AST matrix
-  num_asts = len(raw_asts_list)
-  num_timesteps = longest_ast_len
-  num_code_blocks = len(unique_code_blocks_set) + 1  # for empty block (when nothing left in the program)
+  num_asts = len(clean_asts_list)
+  if clip_timesteps != -1:
+    num_timesteps = clip_timesteps
+  else:
+    num_timesteps = longest_ast_len
+  num_code_blocks = len(map_code_block_string_to_block_id)
 
   ast_matrix = np.zeros((num_asts, num_timesteps, num_code_blocks)) 
   print '-- INFO: AST Matrix:', ast_matrix.shape 
 
-  for ast_index, ast in enumerate(raw_asts_list):
-    for timestep, code_block_string in enumerate(ast):
+  for ast_index, ast in enumerate(clean_asts_list):
+    timestep = 0
+    for code_block_string in ast:
+
       # Skip blocks that are integers and not commands
       if code_block_string.isdigit():
         continue
+
       # Get block ID
       if code_block_string not in map_code_block_string_to_block_id:
         map_code_block_string_to_block_id[code_block_string] = len(map_code_block_string_to_block_id)
       block_id = map_code_block_string_to_block_id[code_block_string]
+
+      # Test AST
+      # if ast_index == test_ast_row:
+      #   map_block_id_to_string = {v: k for k, v in map_code_block_string_to_block_id.items()}
+      #   print block_id, map_block_id_to_string[block_id]
+
+      # Insert one-hot encoding of block ID for this time step
       ast_matrix[ast_index, timestep, block_id] = 1
-      if timestep == len(ast)-1: # if reached the last timestep for this AST, add end token for all remaining timesteps
-        ast_matrix[ast_index, timestep+1:, BLOCK_ID_FOR_END_TOKEN] = 1
+
+      # Increment timestep after a block ID one-hot encoding has been added to ast_matrix
+      timestep += 1 
+
+      if code_block_string == 'end_program': # if reached the last timestep for this AST, add end token for all remaining timesteps
+        ast_matrix[ast_index, timestep:, BLOCK_ID_FOR_END_TOKEN] = 1
+
+  # Test AST
+  # print ast_matrix[test_ast_row]
 
   # Save Matrix
   if save_traj_matrix:
@@ -196,7 +249,7 @@ def test_extracted_ast_matrix(hoc_num):
 if __name__ == "__main__":
   START_PROBLEM_ID = 1
   END_PROBLEM_ID = 9
-  CLIP_TIMESTEPS = 20
+  CLIP_TIMESTEPS = -1
 
   extract_blocks_for_all_hocs(START_PROBLEM_ID, END_PROBLEM_ID, CLIP_TIMESTEPS)
 
