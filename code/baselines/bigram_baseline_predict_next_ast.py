@@ -38,8 +38,8 @@ import random
 import sys, os
 import csv
 import matplotlib.pyplot as plt
-# allows plots to show inline in ipython notebook
-# get_ipython().magic(u'matplotlib inline')
+from itertools import groupby
+import pickle
 
 # our own modules
 from utils import *
@@ -47,27 +47,27 @@ from visualize import *
 
 # Predicted next AST based on bigrams
 code_org_data_bigrams_guess_unweighted_map = {
-    1 : "../../data/bigrams/AST_guesses_unweighted_1.csv",
-    2 : "../../data/bigrams/AST_guesses_unweighted_2.csv",
-    3 : "../../data/bigrams/AST_guesses_unweighted_3.csv",
-    4 : "../../data/bigrams/AST_guesses_unweighted_4.csv",
-    5 : "../../data/bigrams/AST_guesses_unweighted_5.csv",
-    6 : "../../data/bigrams/AST_guesses_unweighted_6.csv",
-    7 : "../../data/bigrams/AST_guesses_unweighted_7.csv",
-    8 : "../../data/bigrams/AST_guesses_unweighted_8.csv",
-    9 : "../../data/bigrams/AST_guesses_unweighted_9.csv",
+    1 : "../../data/bigrams/AST_guesses_unweighted_with_end_token_1.csv",
+    2 : "../../data/bigrams/AST_guesses_unweighted_with_end_token_2.csv",
+    3 : "../../data/bigrams/AST_guesses_unweighted_with_end_token_3.csv",
+    4 : "../../data/bigrams/AST_guesses_unweighted_with_end_token_4.csv",
+    5 : "../../data/bigrams/AST_guesses_unweighted_with_end_token_5.csv",
+    6 : "../../data/bigrams/AST_guesses_unweighted_with_end_token_6.csv",
+    7 : "../../data/bigrams/AST_guesses_unweighted_with_end_token_7.csv",
+    8 : "../../data/bigrams/AST_guesses_unweighted_with_end_token_8.csv",
+    9 : "../../data/bigrams/AST_guesses_unweighted_with_end_token_9.csv",
 }
 
 code_org_data_bigrams_guess_weighted_map = {
-    1 : "../../data/bigrams/AST_guesses_weighted_1.csv",
-    2 : "../../data/bigrams/AST_guesses_weighted_2.csv",
-    3 : "../../data/bigrams/AST_guesses_weighted_3.csv",
-    4 : "../../data/bigrams/AST_guesses_weighted_4.csv",
-    5 : "../../data/bigrams/AST_guesses_weighted_5.csv",
-    6 : "../../data/bigrams/AST_guesses_weighted_6.csv",
-    7 : "../../data/bigrams/AST_guesses_weighted_7.csv",
-    8 : "../../data/bigrams/AST_guesses_weighted_8.csv",
-    9 : "../../data/bigrams/AST_guesses_weighted_9.csv",
+    1 : "../../data/bigrams/AST_guesses_weighted_with_end_token_1.csv",
+    2 : "../../data/bigrams/AST_guesses_weighted_with_end_token_2.csv",
+    3 : "../../data/bigrams/AST_guesses_weighted_with_end_token_3.csv",
+    4 : "../../data/bigrams/AST_guesses_weighted_with_end_token_4.csv",
+    5 : "../../data/bigrams/AST_guesses_weighted_with_end_token_5.csv",
+    6 : "../../data/bigrams/AST_guesses_weighted_with_end_token_6.csv",
+    7 : "../../data/bigrams/AST_guesses_weighted_with_end_token_7.csv",
+    8 : "../../data/bigrams/AST_guesses_weighted_with_end_token_8.csv",
+    9 : "../../data/bigrams/AST_guesses_weighted_with_end_token_9.csv",
 }
 
 # Actual trajectories
@@ -95,15 +95,25 @@ trajectory_count_map = {
   9: "../../data/trajectory_count_files/counts_9.txt",
 }
 
+END_TOKEN = -1
 
-def predict_accuracy(DATA_SET_HOC, DATA_SZ_LIST, weighted_bigrams_bool = True, use_bigrams_prediction_bool = True):
+def predict_accuracy(DATA_SET_HOC, DATA_SZ, weighted_bigrams_bool = True, use_bigrams_prediction_bool = True, accuracy_per_timestep = False):
   '''
   Predict accuracy of baseline
   1) Using Bigram Predictions
   2) Using gold guesses (i.e. Guess that the next AST is the correct solution where AST ID = 0)
 
   Note: Can run this over multiple number of samples (data size)
+
+  Returns: Either a float accuracy score (average over all timesteps) or a list of accuracy scores over each timestep.
   '''
+
+  # Store accuracy values for each timestep or an average for entire problem
+  accuracy_map = {}  # {timestep => (num_correct, num_total)}
+  max_num_timestep = 0
+
+  if accuracy_per_timestep:
+    print 'INFO: Calculating accuracy at every timestep'
 
   # Create Bigrams Prediction Map
   bigrams_prediction_map = {}
@@ -135,62 +145,146 @@ def predict_accuracy(DATA_SET_HOC, DATA_SZ_LIST, weighted_bigrams_bool = True, u
   else:
     print 'INFO: Predicting Gold Solution'
 
-  for DATA_SZ in DATA_SZ_LIST:
-    num_samples = DATA_SZ
-    print '*' * 10
-    print 'DATA SET: HOC', DATA_SET_HOC
-    print 'num samples: ', num_samples
-    correct_count = 0
-    total_count = 0
+  num_samples = DATA_SZ
+  print '*' * 10
+  print 'DATA SET: HOC', DATA_SET_HOC
+  print 'num samples: ', num_samples
 
-    with open(trajectories_asts_filepath, 'rb') as trajectories_csv_file:
-      trajectories_reader = csv.reader(trajectories_csv_file, delimiter=',')
-      for index, line in enumerate(trajectories_reader):
-        if index == num_samples:
-          break
-        traj_id = int(line[0])
-        # Modify trajectory count increments based on whether or not we are weighting bigrams
-        if weighted_bigrams_bool:
-          traj_count = traj_counts[traj_id]
+  with open(trajectories_asts_filepath, 'rb') as trajectories_csv_file:
+    trajectories_reader = csv.reader(trajectories_csv_file, delimiter=',')
+    # Iterate through student trajectories for this problem
+    for index, line in enumerate(trajectories_reader):
+      if index == num_samples:
+        break
+      traj_id = int(line[0])
+
+      # Modify trajectory count increments based on whether or not we are weighting bigrams
+      if weighted_bigrams_bool:
+        traj_count = traj_counts[traj_id]
+      else:
+        traj_count = 1
+      
+      # Clean up of trajectory line (list of ASTs)
+      line = line[1:] # ignore first element which is the trajectory ID
+      line = [x[0] for x in groupby(line)]  # ignore consecutive duplicate ASTs in trajectory
+      # Testing
+      # if traj_id == 10:
+      #   print line
+      
+      # Iterate through every timestep and compare predicted AST (predicted from previous AST) with actual AST. Including prediction of the end token.
+      for timestep in xrange(len(line)+1):
+        # Artificially insert end token at last timestep for correct solution
+        if timestep == len(line):
+          ast = END_TOKEN  
         else:
-          traj_count = 1
-        line = line[1:] # ignore first element which is the trajectory ID
-        for timestep, ast in enumerate(line):
-          ast = int(ast)
-          if timestep == 0:  # no prediction for first timestep
-            pass
-          else:
-            if use_bigrams_prediction_bool:
-              # Predicting using Bigram Baseline
-              if ast == 0:
-                continue
-              elif ast == prediction_prev_ast:
-                correct_count += traj_count
-              total_count += traj_count
-            else:
-              # Predicting using Gold Baseline (AST = 0)
-              if ast == 0:
-                correct_count += traj_count
-              total_count += traj_count
+          ast = int(line[timestep])
+        # Testing
+        # if traj_id == 10:
+        #   print ast
+        # Skip first time step: no prediction since we haven't seen a previous AST
+        if timestep == 0:  
+          pass
+        else:
+          # Initialize each timestep's counts to 0 correct and 0 total predictions
+          if timestep not in accuracy_map:
+            accuracy_map[timestep] = (0, 0)
 
-          # Predicting using Bigram Baseline (handle special case)
+          # Keep track of max number of timesteps
+          if timestep > max_num_timestep:
+            max_num_timestep = timestep
+
+          # Predict!
+          num_correct, num_total = accuracy_map[timestep]
+          new_num_correct = num_correct
+          new_num_total = num_total
           if use_bigrams_prediction_bool:
-            if ast not in bigrams_prediction_map:  # reached the end of one student's trajectory
+            # (1) Predicting using Bigram Baseline
+            if ast == 0:
               continue
-            # otherwise, predict the next AST of that student
-            prediction_prev_ast = bigrams_prediction_map[ast]
+            elif ast == prediction_prev_ast:
+              new_num_correct += traj_count
+          else: 
+            # (2) Predicting using Gold Baseline (AST = 0)
+            if ast == 0:
+              new_num_correct += traj_count
+          new_num_total += traj_count
+          # Update accuracy counts for this timestep
+          accuracy_map[timestep] = (new_num_correct, new_num_total)
 
-    accuracy = float(correct_count)/total_count
+        # Predicting using Bigram Baseline (handle special case)
+        if use_bigrams_prediction_bool:
+          if ast not in bigrams_prediction_map:  # reached the end of one student's trajectory
+            continue
+          # otherwise, predict the next AST of that student
+          prediction_prev_ast = bigrams_prediction_map[ast]
 
-    print 'Correct: ', correct_count
-    print 'Total: ', total_count
+  # print accuracy_map
+  # Calculate accuracy at each timestep (num correct / num total) OR over all timesteps
+  acc_per_timestep = []
+  if not accuracy_per_timestep:
+    num_correct_over_all_timesteps = 0
+    num_total_over_all_timesteps = 0
+
+  for timestep in xrange(1, max_num_timestep+1):
+    num_correct, num_total = accuracy_map[timestep]
+    accuracy = float(num_correct)/num_total
+    acc_per_timestep.append(accuracy)
+    if not accuracy_per_timestep:
+      num_correct_over_all_timesteps += num_correct
+      num_total_over_all_timesteps += num_total
+
+  if not accuracy_per_timestep:
+    accuracy = float(num_correct_over_all_timesteps)/num_total_over_all_timesteps
+    print 'Correct: ', num_correct_over_all_timesteps
+    print 'Total: ', num_total_over_all_timesteps
     print 'Accuracy: ', accuracy
+    return accuracy
+
+  return acc_per_timestep
 
 
 if __name__ == "__main__":
-  DATA_SET_HOC = 7
-  DATA_SZ_LIST = [100, 1000, 10000, 100000]
+  '''
+  Runs through given problems and returns accuracy scores using given method.
+  See predict_accuracy function for description of methods.
 
-  predict_accuracy(DATA_SET_HOC, DATA_SZ_LIST, weighted_bigrams_bool = True, use_bigrams_prediction_bool = True)
+  Set ff:
+    USE_BIGRAMS_TO_PREDICT (bigrams or gold solution method for prediction)
+    USE_WEIGHTED_BIGRAMS (weighted or unweighted bigram files)
+    ACCURACY_PER_TIMESTEP (return accuracy at every timestep or not)
+
+  Saves a list of values representing accuracy for each HOC, where these accuracy values can be
+  (1) a single accuracy float value for each HOC or
+  (2) a list of accuracy-per-timestep values
+    depending on return value of predict_accuracy 
+  '''
+
+  START_HOC = 1
+  END_HOC = 9
+
+  DATA_SET_HOC = xrange(START_HOC, END_HOC+1)
+  DATA_SZ = 100000
+
+  USE_WEIGHTED_BIGRAMS = True
+  USE_BIGRAMS_TO_PREDICT = True
+  ACCURACY_PER_TIMESTEP = True
+
+  acc_list = []
+  for hoc in DATA_SET_HOC:
+    acc = predict_accuracy(hoc, DATA_SZ, weighted_bigrams_bool = USE_WEIGHTED_BIGRAMS, use_bigrams_prediction_bool = USE_BIGRAMS_TO_PREDICT, accuracy_per_timestep = ACCURACY_PER_TIMESTEP)
+    acc_list.append(acc)
+
+  print '*--*--*' * 10
+  print 'List of accuracies'
+  print 'HOC numbers:', START_HOC, ' to ', END_HOC
+  print 'Bigram Accuracies:'
+  for hoc_index, hoc_acc in enumerate(acc_list):
+    print 'HOC', str(START_HOC + hoc_index)
+    print hoc_acc
+
+  filename = 'baseline_results/bigram_acc_per_timestep.pickle'
+  pickle.dump(acc_list, open (filename, 'wb'))
+  print '-- SAVING'
+  print filename
 
 
