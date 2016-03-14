@@ -119,6 +119,7 @@ def _compute_loss_acc_pred(X, truth, compute_loss_acc):
     # returns loss, raw accuracy, corrected accuracy and predictions
     loss, acc, pred = compute_loss_acc(X, truth)
     corrected_acc = compute_corrected_acc_on_ast_rows(X, truth, pred)
+    # TODO: Compute accuracies over timesteps
     return loss, acc, corrected_acc, pred
 
 
@@ -212,6 +213,8 @@ def compute_corrected_acc_on_ast_rows(X, truth, pred):
                     correct_count += 1
     corrected_acc = correct_count/float(total_count)
     return corrected_acc
+
+
 
 
 def compute_corrected_acc_on_ast_ids(X_ast_ids, truth_ast_ids, pred_ast_ids): 

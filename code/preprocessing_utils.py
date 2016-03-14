@@ -41,7 +41,19 @@ def pad_ast_block_matrices():
             print ast_mat.shape
             np.save(BLOCK_MAT_PREFIX + hoc_num + BLOCK_LIMIT_TIMESTEPS +  MAT_SUFFIX, ast_mat)
 
+def cut_ast_block_matrices():
+	""" num_blocks is incorrect for hoc 6-9. We only have 8 different blocks, 
+	but num_blocks is still 15"""
+	for hoc in xrange(6, 10):
+		hoc_num = str(hoc)
+		ast_mat = np.load(BLOCK_MAT_PREFIX + hoc_num + BLOCK_LIMIT_TIMESTEPS +  MAT_SUFFIX)
+		num_asts, max_ast_len, num_blocks = ast_mat.shape
+		
+		ast_mat = ast_mat[:,:,:8]
+		num_asts, max_ast_len, num_blocks = ast_mat.shape
+		print num_blocks
+		np.save(BLOCK_MAT_PREFIX + hoc_num + BLOCK_LIMIT_TIMESTEPS +  MAT_SUFFIX, ast_mat)
 
 if __name__ == "__main__":
     print "You are running preprocessing_utils.py directly, so you must be testing it!"
-    
+    cut_ast_block_matrices()

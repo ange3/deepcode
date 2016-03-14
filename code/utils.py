@@ -36,8 +36,7 @@ def save_ast_embeddings(ast_embeddings, hoc_num):
 # them to GPU at once for slightly improved performance. This would involve
 # several changes in the main program, though, and is not demonstrated here.
 # taken from lasagne mnist example.
-def iterate_minibatches(X, next_problem, truth, batchsize, shuffle=F
-alse):
+def iterate_minibatches(X, next_problem, truth, batchsize, shuffle=False):
     assert(X.shape[0] == truth.shape[0])
     assert(X.shape[0] == next_problem.shape[0])
     num_samples = X.shape[0]
@@ -402,6 +401,27 @@ def load_dataset_predict_ast(hoc_num=7, data_sz=-1):
     return train_data, val_data, test_data, ast_id_to_row_map, row_to_ast_id_map, num_timesteps, num_asts
 
 
+def load_dataset_predict_block_all_hocs():
+    X_all_hocs = []
+    mask_all_hocs = []
+    y_all_hocs = []
+    hocs_samples_count = []
+    hoc_to_indices = {}
+    for hoc in xrange(1,10):
+        train_data, val_data, test_data, all_data, num_timesteps, num_blocks  = load_dataset_predict_block(hoc_num=hoc)
+        X, mask, y = all_data
+        X_all_hocs.append(X)
+        mask_all_hocs.append(mask)
+        y_all_hocs.append(y)
+        hocs_samples_count.append(all_data[0].shape[0])
+        
+    X_all_hocs_mat = reduce(lambda a,b: np.concatenate([a,b], axis=0), X_all_hocs)
+    mask_all_hocs_mat = reduce(lambda a,b: np.concatenate([a,b], axis=0), mask_all_hocs)
+    y_all_hocs_mat = reduce(lambda a,b: np.concatenate([a,b], axis=0), y_all_hocs)
+
+    return X_all_hocs_mat, mask_all_hocs_mat, y_all_hocs_mat
+
+
 def load_dataset_predict_block(hoc_num=7, data_sz=-1):
     print('Preparing network inputs and targets, and the block maps...')
     hoc_num = str(hoc_num)
@@ -430,7 +450,7 @@ def load_dataset_predict_block(hoc_num=7, data_sz=-1):
     # Useful to create smaller data sets for testing purposes.
     if data_sz != -1:
         ast_mat = ast_mat[:data_sz]
-    print 'Trajectory matrix shape {}'.format(ast_mat.shape)
+    # print 'Trajectory matrix shape {}'.format(ast_mat.shape)
 
     # shuffle the first dimension of the matrix
     np.random.shuffle(ast_mat)
@@ -450,7 +470,7 @@ def load_dataset_predict_block(hoc_num=7, data_sz=-1):
 
     num_timesteps = train_data[0].shape[1]
 
-    print ("Inputs and targets done!")
+    # print ("Inputs and targets done!")
     # return train_data, val_data, test_data, block_id_to_row_map, row_to_block_id_map, num_timesteps, num_blocks
     return train_data, val_data, test_data, all_data, num_timesteps, num_blocks
 
@@ -505,6 +525,7 @@ def load_dataset_predict_ast_using_embeddings(hoc_num=2, data_sz=-1):
     print ("Inputs and targets done!")
     return  X, y, ast_maps
 
+
 def print_sample_program(hoc_num=7, ast_id=0):
     hoc_num = str(hoc_num)
     embed_ast_map_file = EMBED_AST_MAP_PREFIX + hoc_num + MAP_SUFFIX
@@ -522,10 +543,26 @@ def print_sample_program(hoc_num=7, ast_id=0):
         block_row = np.argmax(ast_mat[ast_row,t,:])
         block_string = block_row_to_string_map[block_row]
         program.append(block_string)
+    print "dimension num_blocks {}".format(num_blocks)
     print program
+
+def convert_to_block_strings(mat_with_block_rows):
+    num_samples,  num_timesteps  = mat_with_block_rows.shape
+    block_string_to_row_map = pickle.load(open(BLOCK_STRING_TO_BLOCK_ROW_MAP, "rb" ))
+    block_row_to_string_map = {v: k for k, v in block_string_to_row_map.items()}
+    mat_with_block_strings = np.empty((num_samples, num_timesteps), dtype=object)
+    for i in xrange(num_samples):
+        for t in xrange(num_timesteps):
+            block_string = block_row_to_string_map[int(mat_with_block_rows[i,t])]
+            # print block_string
+            mat_with_block_strings[i,t] = block_string
+    return mat_with_block_strings
+
 
 
 
 if __name__ == "__main__":
     print "You are running utils.py directly, so you must be testing it!"
-    print_sample_program(hoc_num=1,ast_id=1)
+    for hoc in xrange(1,10):
+        print_sample_program(hoc_num=hoc,ast_id=0)
+

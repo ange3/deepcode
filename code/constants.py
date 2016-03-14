@@ -29,7 +29,7 @@ BLOCK_MAT_PREFIX = '../processed_data/block_level/ast_matrix_'
 BLOCK_LIMIT_TIMESTEPS = '_timesteps_20'
 
 # BLOCK IDS ARE THE SAME AS BLOCK ROWS
-BLOCK_STRING_TO_BLOCK_ROW_MAP = '../processed_data/block_level/map_block_string_to_block_id.pickle'
+BLOCK_STRING_TO_BLOCK_ROW_MAP = '../processed_data/block_level/map_block_string_to_block_id_master.pickle'
 MAT_SUFFIX = '.npy'
 MAP_SUFFIX = '.pickle'
 
