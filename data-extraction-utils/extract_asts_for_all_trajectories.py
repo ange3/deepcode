@@ -235,10 +235,17 @@ def extract_asts_for_one_hoc_from_larry_trajectories(hoc_num, clip_traj_bool_by_
             traj_matrix_filename = PATH_TO_PROCESSED_DATA + str(clip_traj_length) + '_timesteps/traj_matrix_' + str(hoc_num)
             map_ast_row_filename = PATH_TO_PROCESSED_DATA + str(clip_traj_length) + '_timesteps/map_ast_row_' + str(hoc_num)
 
+        if clip_num_traj != -1:
+            # print 'NOT CLIPPING TRAJECTORIES'
         # Clipping number of samples
-        # if clip_num_traj != -1:
-        #     traj_matrix_filename = traj_matrix_filename + '_samples_' + str(clip_num_traj
-        #     map_ast_row_filename = map_ast_row_filename + '_samples_' + str(clip_num_traj)
+        # else:
+            new_traj_matrix_filename = traj_matrix_filename + '_samples_' + str(clip_num_traj)
+            new_map_ast_row_filename = map_ast_row_filename + '_samples_' + str(clip_num_traj)
+            # traj_matrix_filename += str(clip_num_traj
+            # map_ast_row_filename += '_samples_' 
+            # map_ast_row_filename += str(clip_num_traj)
+            traj_matrix_filename = new_traj_matrix_filename
+            map_ast_row_filename = new_map_ast_row_filename
 
         # Add file suffix
         traj_matrix_filename += '.npy'
@@ -299,8 +306,8 @@ def test_extracted_traj_matrix(hoc_num):
     print 'map_ast_id_to_row_index[AST 12] = {}, map_ast_id_to_row_index[AST 0] = {}'.format(ap_ast_id_to_row_index['12'], map_ast_id_to_row_index['0'])
 
 if __name__ == "__main__":
-    START_PROBLEM_ID = 5
-    END_PROBLEM_ID = 5
+    START_PROBLEM_ID = 6
+    END_PROBLEM_ID = 6
 
     CLIP_TRAJECTORY_BOOL = False
     CLIP_TRAJ_FREQ = 1

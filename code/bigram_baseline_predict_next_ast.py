@@ -44,6 +44,7 @@ import pickle
 # our own modules
 from utils import *
 from visualize import *
+from model_predict_ast import compute_accuracy_given_data_and_predictions
 
 # Predicted next AST based on bigrams
 code_org_data_bigrams_guess_unweighted_map = {
@@ -96,6 +97,61 @@ trajectory_count_map = {
 }
 
 END_TOKEN = -1
+
+def count_bigrams(x_train):
+  '''
+  Input: x_train matrix (num_trajectories, num_timesteps, num_asts)
+  Output: Map { AST ID: {every other AST ID: count} }
+
+  Counts the number of times other AST IDs comes after each AST ID
+  '''
+  bigram_count_map = {}
+  return bigram_count_map
+
+def create_bigram_mapping(x_train):
+  '''
+  Input: x_train matrix (num_trajectories, num_timesteps, num_asts)
+  Output: Map {AST row => predicted AST row using bigrams}
+
+  Mapping from AST row to succeeding AST row that appears most frequently in training data
+  '''
+  bigram_map = {}  
+  bigram_count_map = count_bigrams(x_train)  # returns { AST row: {every other AST row: count} }
+  for ast_row_key in bigram_count_map.keys():
+    count_map = bigram_count_map[ast_row_key]
+    count_tuples = count_map.items()
+    most_frequent_successor_ast_row = max(count_tuples, key=itemgetter(1))[0]
+    bigram_map[ast_row_key] = most_frequent_successor_ast_row
+  return bigram_map
+
+def make_bigram_predictions(x, bigram_map):
+  '''
+  Input: x: (num_trajectories, num_timesteps, num_asts)
+        bigram_map: {AST row => predicted AST row using bigrams}
+
+  Output: predictions matrix (num_trajectories, num_timesteps, num_asts) 
+  '''
+  num_trajectories, num_timesteps, num_asts = x.shape
+
+  predictions = np.zeros((num_trajectories, num_timesteps, num_asts))
+
+  for n in xrange(num_trajectories):
+    for t in xrange(num_timesteps):
+      ast_row_key = np.argmax(x[n, t, :])
+      predicted_ast_successor = bigram_map[ast_row_key]
+      predictions[n, t, predicted_ast_successor] = 1
+
+  return predictions
+
+def compute_accuracy(x, y, bigram_map):
+  '''
+
+  Output: average accuracy value, list of accuracy values per timestep
+  '''
+  prediction = make_bigram_predictions(x, bigram_map)
+  acc, acc_list = compute_accuracy_given_data_and_predictions(x, y, prediction, compute_acc_per_timestep_bool=True)
+  return acc, acc_list
+
 
 def predict_accuracy(DATA_SET_HOC, DATA_SZ, weighted_bigrams_bool = True, use_bigrams_prediction_bool = True, accuracy_per_timestep = False):
   '''
@@ -262,28 +318,36 @@ if __name__ == "__main__":
   START_HOC = 1
   END_HOC = 9
 
-  DATA_SET_HOC = xrange(START_HOC, END_HOC+1)
-  DATA_SZ = 100000
+
 
   USE_WEIGHTED_BIGRAMS = True
   USE_BIGRAMS_TO_PREDICT = True
   ACCURACY_PER_TIMESTEP = True
 
-  acc_list = []
-  for hoc in DATA_SET_HOC:
-    acc = predict_accuracy(hoc, DATA_SZ, weighted_bigrams_bool = USE_WEIGHTED_BIGRAMS, use_bigrams_prediction_bool = USE_BIGRAMS_TO_PREDICT, accuracy_per_timestep = ACCURACY_PER_TIMESTEP)
-    acc_list.append(acc)
+  train_acc_map, val_acc_map, test_acc_map = {}, {}, {}
+  for hoc_num in xrange(START_HOC, END_HOC+1):
+    train_data, val_data, test_data, ast_id_to_row_map, row_to_ast_id_map, num_timesteps, num_asts = load_dataset_predict_ast(hoc_num)
+    x_train, y_train = train_data
+    bigram_map = create_bigram_mapping(x_train)
+    train_acc, train_acc_list = compute_accuracy(x_train, y_train, bigram_map)
+    x_val, y_val = val_data
+    val_acc, val_acc_list = compute_accuracy(x_val, y_val, bigram_map)
+    x_test, y_test = test_data
+    test_acc, test_acc_list = compute_accuracy(x_test, y_test, bigram_map)
+    
+    train_acc_map[hoc_num] = (train_acc, train_acc_list)
+    val_acc_map[hoc_num] = (val_acc, val_acc_list)
+    test_acc_map[hoc_num] = (test_acc, test_acc_list)
 
   print '*--*--*' * 10
   print 'List of accuracies'
   print 'HOC numbers:', START_HOC, ' to ', END_HOC
   print 'Bigram Accuracies:'
-  for hoc_index, hoc_acc in enumerate(acc_list):
-    print 'HOC', str(START_HOC + hoc_index)
-    print hoc_acc
+  for hoc_num in xrange(START_HOC, END_HOC+1):
+    print_accuracies(hoc_num, train_acc_map, val_acc_map, test_acc_map)
 
-  filename = 'baseline_results/bigram_acc_per_timestep.pickle'
-  pickle.dump(acc_list, open (filename, 'wb'))
+  filename = 'baseline_results/bigram_acc_per_timestep_train_test_val_maps.pickle'
+  pickle.dump((train_acc_map, val_acc_map, test_acc_map), open (filename, 'wb'))
   print '-- SAVING'
   print filename
 

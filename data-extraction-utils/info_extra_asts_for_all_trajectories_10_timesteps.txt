@@ -45,6 +45,22 @@ Map AST ID to Row Index Filename: ../processed_data/10_timesteps/map_ast_row_4.p
 
 ----- CLIPPING AFTER 10,000 TRAJECTORIES -----
 
+*** INFO: HOC 3 ***
+1) Number of ASTs: 1350
+-- Info: Removed ASTs since some trajectories were clipped
+Original num ASTS: 35559
+Removed ASTS: 34210
+Remaining ASTS: 1349
+Percentage ASTs remaining (unweighted by count of traj):  3.7936949858%
+2) Number of Trajectories: 10000
+Clipped Trajectory Length: 10
+3) Trajectories matrix created and encoded
+Trajectories Matrix shape: (10000, 10, 1350)
+--SAVE: Saving trajectories matrix and AST ID map
+Traj Matrix Filename: ../processed_data/10_timesteps/traj_matrix_3.npy
+Map AST ID to Row Index Filename: ../processed_data/10_timesteps/map_ast_row_3.pickle
+Finished extracting ASTs from Problem 3 in 3.094299s
+
 *** INFO: HOC 4 ***
 1) Number of ASTs: 1067
 2) Number of Trajectories: 10000
@@ -55,3 +71,35 @@ Trajectories Matrix shape: (10000, 10, 1067)
 Traj Matrix Filename: ../processed_data/10_timesteps/traj_matrix_4.npy
 Map AST ID to Row Index Filename: ../processed_data/10_timesteps/map_ast_row_4.pickle
 Finished extracting ASTs from Problem 4 in 4.556039s
+
+*** INFO: HOC 5 ***
+1) Number of ASTs: 2756
+-- Info: Removed ASTs since some trajectories were clipped
+Original num ASTS: 109203
+Removed ASTS: 106448
+Remaining ASTS: 2755
+Percentage ASTs remaining (unweighted by count of traj):  2.52282446453%
+2) Number of Trajectories: 10000
+Clipped Trajectory Length: 10
+3) Trajectories matrix created and encoded
+Trajectories Matrix shape: (10000, 10, 2756)
+--SAVE: Saving trajectories matrix and AST ID map
+Traj Matrix Filename: ../processed_data/10_timesteps/traj_matrix_5_samples_10000.npy
+Map AST ID to Row Index Filename: ../processed_data/10_timesteps/map_ast_row_5_samples_10000.pickle
+Finished extracting ASTs from Problem 5 in 51.619602s
+
+*** INFO: HOC 6 ***
+1) Number of ASTs: 2128
+-- Info: Removed ASTs since some trajectories were clipped
+Original num ASTS: 8743
+Removed ASTS: 6616
+Remaining ASTS: 2127
+Percentage ASTs remaining (unweighted by count of traj):  24.3280338557%
+2) Number of Trajectories: 8733
+Clipped Trajectory Length: 10
+3) Trajectories matrix created and encoded
+Trajectories Matrix shape: (8733, 10, 2128)
+--SAVE: Saving trajectories matrix and AST ID map
+Traj Matrix Filename: ../processed_data/10_timesteps/traj_matrix_6_samples_10000.npy
+Map AST ID to Row Index Filename: ../processed_data/10_timesteps/map_ast_row_6_samples_10000.pickle
+Finished extracting ASTs from Problem 6 in 32.888484s

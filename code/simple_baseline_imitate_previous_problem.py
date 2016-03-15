@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 # our own modules
 from utils import *
 from visualize import *
-sys.path.append(os.path.abspath("models/"))
+sys.path.append(os.path.abspath("baseline_models/"))
 from baseline_imitate_previous_problem import *
 from abstract_knowledge_model import *
 
