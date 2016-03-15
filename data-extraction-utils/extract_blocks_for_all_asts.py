@@ -26,10 +26,11 @@
 #       'no_block': 0,
 #       'program': 1}
 #==============================================================================
-# CURRENT STATUS: In progress/ working! :) 
+# CURRENT STATUS: Done
 #==============================================================================
 # USAGE: 
-# run file in terminal
+# Set parameters in main function below (e.g. problem ID number range, clipping settings, etc.)
+# In Terminal, run  python extract_blocks_for_all_asts
 #==============================================================================
 #
 ###############################################################################

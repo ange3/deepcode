@@ -1,0 +1,57 @@
+*** INFO: HOC 1 ***
+1) Number of ASTs: 1221
+2) Number of Trajectories: 5568
+Clipped Trajectory Length: 10
+3) Trajectories matrix created and encoded
+Trajectories Matrix shape: (5568, 10, 1221)
+--INFO: Saving trajectories matrix and AST ID map
+Traj Matrix Filename: ../processed_data/10_timesteps/traj_matrix_1.npy
+Map AST ID to Row Index Filename: ../processed_data/10_timesteps/map_ast_row_1.pickle
+Finished extracting ASTs from Problem 1 in 1.649865s
+
+*** INFO: HOC 2 ***
+1) Number of ASTs: 1916
+2) Number of Trajectories: 15567
+Clipped Trajectory Length: 10
+3) Trajectories matrix created and encoded
+Trajectories Matrix shape: (15567, 10, 1916)
+--INFO: Saving trajectories matrix and AST ID map
+Traj Matrix Filename: ../processed_data/10_timesteps/traj_matrix_2.npy
+Map AST ID to Row Index Filename: ../processed_data/10_timesteps/map_ast_row_2.pickle
+Finished extracting ASTs from Problem 2 in 7.813233s
+
+*** INFO: HOC 3 ***
+1) Number of ASTs: 2832
+2) Number of Trajectories: 35549
+Clipped Trajectory Length: 10
+3) Trajectories matrix created and encoded
+Trajectories Matrix shape: (35549, 10, 2832)
+--INFO: Saving trajectories matrix and AST ID map
+Traj Matrix Filename: ../processed_data/10_timesteps/traj_matrix_3.npy
+Map AST ID to Row Index Filename: ../processed_data/10_timesteps/map_ast_row_3.pickle
+Finished extracting ASTs from Problem 3 in 245.456022s
+
+*** INFO: HOC 4 ***
+1) Number of ASTs: 2451
+2) Number of Trajectories: 48954
+Clipped Trajectory Length: 10
+3) Trajectories matrix created and encoded
+Trajectories Matrix shape: (48954, 10, 2451)
+--INFO: Saving trajectories matrix and AST ID map
+Traj Matrix Filename: ../processed_data/10_timesteps/traj_matrix_4.npy
+Map AST ID to Row Index Filename: ../processed_data/10_timesteps/map_ast_row_4.pickle
+
+
+
+----- CLIPPING AFTER 10,000 TRAJECTORIES -----
+
+*** INFO: HOC 4 ***
+1) Number of ASTs: 1067
+2) Number of Trajectories: 10000
+Clipped Trajectory Length: 10
+3) Trajectories matrix created and encoded
+Trajectories Matrix shape: (10000, 10, 1067)
+--SAVE: Saving trajectories matrix and AST ID map
+Traj Matrix Filename: ../processed_data/10_timesteps/traj_matrix_4.npy
+Map AST ID to Row Index Filename: ../processed_data/10_timesteps/map_ast_row_4.pickle
+Finished extracting ASTs from Problem 4 in 4.556039s
