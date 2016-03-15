@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# File: preprocess.py
+# File: create-data-maps.py
 # @Author: Angela Sy
 # @created: Feb 04 2016
 #
