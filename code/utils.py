@@ -344,7 +344,7 @@ def load_dataset_predict_ast(hoc_num=7, data_sz=-1):
     data_set = 'hoc' + hoc_num
     # if DATA_SZ = -1, use entire data set
     # For DATA_SZ, powers of 2 work best for performance.
-    ast_map_file = '../processed_data/map_ast_row_' + hoc_num + '.pickle'
+    ast_map_file = TRAJ_AST_MAP_PREFIX + hoc_num + MAP_SUFFIX
 
     # Load AST ID to Row Map
     ast_id_to_row_map = pickle.load(open( ast_map_file, "rb" ))
@@ -406,7 +406,9 @@ def load_dataset_predict_block_all_hocs():
     mask_all_hocs = []
     y_all_hocs = []
     hocs_samples_count = []
+    split_indices =  []
     hoc_to_indices = {}
+    total_count = 0
     for hoc in xrange(1,10):
         train_data, val_data, test_data, all_data, num_timesteps, num_blocks  = load_dataset_predict_block(hoc_num=hoc)
         X, mask, y = all_data
@@ -414,16 +416,21 @@ def load_dataset_predict_block_all_hocs():
         mask_all_hocs.append(mask)
         y_all_hocs.append(y)
         hocs_samples_count.append(all_data[0].shape[0])
-        
+        total_count += all_data[0].shape[0]
+        split_indices.append(total_count)
+    
+    # we don't need the last split index for np.split(), otherwise the last 
+    # split will be an empty array
+    del split_indices[-1]
     X_all_hocs_mat = reduce(lambda a,b: np.concatenate([a,b], axis=0), X_all_hocs)
     mask_all_hocs_mat = reduce(lambda a,b: np.concatenate([a,b], axis=0), mask_all_hocs)
     y_all_hocs_mat = reduce(lambda a,b: np.concatenate([a,b], axis=0), y_all_hocs)
 
-    return X_all_hocs_mat, mask_all_hocs_mat, y_all_hocs_mat
+    return X_all_hocs_mat, mask_all_hocs_mat, y_all_hocs_mat, split_indices
 
 
 def load_dataset_predict_block(hoc_num=7, data_sz=-1):
-    print('Preparing network inputs and targets, and the block maps...')
+    print('Preparing network inputs and targets, and the block maps for hoc {}'.format(hoc_num))
     hoc_num = str(hoc_num)
     data_set = 'hoc' + hoc_num
     # if DATA_SZ = -1, use entire data set
@@ -477,6 +484,16 @@ def load_dataset_predict_block(hoc_num=7, data_sz=-1):
 def save_ast_embeddings(ast_embeddings, hoc_num):
     np.save(AST_EMBEDDINGS_PREFIX + str(hoc_num) + MAT_SUFFIX, ast_embeddings)
 
+def save_ast_embeddings_for_all_hocs(ast_embeddings, split_indices):
+    """ input: matrix with embeddings for asts across all HOCs. 
+        We need to split up this matrix by asts, using the split_indices list 
+        we created when we concatenated the data across all hocs.
+    """
+    ast_embeddings_list = np.split(ast_embeddings, split_indices)
+    for hoc in xrange(HOC_MIN, HOC_MAX + 1):
+        save_ast_embeddings(ast_embeddings_list[hoc - 1], hoc)
+
+
 def load_dataset_predict_ast_using_embeddings(hoc_num=2, data_sz=-1):
     # if DATA_SZ = -1, use entire data set
     # For DATA_SZ, powers of 2 work best for performance.
@@ -516,6 +533,7 @@ def load_dataset_predict_ast_using_embeddings(hoc_num=2, data_sz=-1):
     if data_sz != -1:
         traj_mat = traj_mat[:data_sz]
     print 'Trajectory matrix shape {}'.format(traj_mat.shape)
+    num_asts = traj_mat.shape[2]
 
     # shuffle the first dimension of the matrix
     np.random.shuffle(traj_mat)
@@ -523,7 +541,7 @@ def load_dataset_predict_ast_using_embeddings(hoc_num=2, data_sz=-1):
     X, y = prepare_traj_data_for_rnn_using_embeddings(traj_mat, ast_embeddings, traj_row_to_ast_id_map, embed_ast_id_to_row_map)
 
     print ("Inputs and targets done!")
-    return  X, y, ast_maps
+    return  X, y, ast_maps, num_asts
 
 
 def print_sample_program(hoc_num=7, ast_id=0):
@@ -563,6 +581,7 @@ def convert_to_block_strings(mat_with_block_rows):
 
 if __name__ == "__main__":
     print "You are running utils.py directly, so you must be testing it!"
-    for hoc in xrange(1,10):
-        print_sample_program(hoc_num=hoc,ast_id=0)
+    load_dataset_predict_block_all_hocs()
+    # for hoc in xrange(1,10):
+    #     print_sample_program(hoc_num=hoc,ast_id=0)
 

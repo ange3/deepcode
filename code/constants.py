@@ -9,11 +9,14 @@
 # DESCRIPTION:
 # A single place to put all constants. This makes it easier to coordinate
 # constants such as filenames between different scripts.
+# A lot of the data we are using is not public. The file paths assume a 
+# certain file structure, so if you get the data, you need to make sure that
+# paths work out.
 #==============================================================================
-# CURRENT STATUS: In progress/ working! :) 
+# CURRENT STATUS: Always in progress, but also always working! ;) 
 #==============================================================================
 # USAGE: 
-#  from constants import *
+# from constants import *
 #==============================================================================
 #
 ###############################################################################
@@ -35,3 +38,11 @@ MAP_SUFFIX = '.pickle'
 
 AST_EMBEDDINGS_PREFIX = '../processed_data/embeddings/ast_embeddings_hoc'
 EMBED_AST_MAP_PREFIX = '../processed_data/block_level/map_row_index_to_ast_id_'
+
+# To specify which Hour of Code problems we are taking into account
+# when we iterate over "all" of them. 
+# there are a bunch of hocs we are not including yet, since they are still
+# in the SQL database. Once we include them, we should change the following
+# constants.
+HOC_MIN = 1
+HOC_MAX = 9

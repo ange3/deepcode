@@ -135,7 +135,7 @@ def train(train_data, val_data, train_loss_acc, compute_loss_acc, compute_pred, 
     num_iters = 0
 
 
-    print("Starting training :)...")
+    print("Starting training :...")
     print("Total training iterations: {}".format(total_train_iters))
     # We iterate over epochs:
     train_accs = []

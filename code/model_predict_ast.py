@@ -24,11 +24,14 @@ import theano.tensor as T
 import time
 import utils
 
-def _build_net_layers(num_timesteps, num_asts, hidden_size, learning_rate, grad_clip=10, dropout_p=0.0, num_lstm_layers=1):
+def _build_net_layers(num_timesteps, num_asts, hidden_size, learning_rate, embed_dim=-1, grad_clip=10, dropout_p=0.0, num_lstm_layers=1):
     print("Building network ...")
-   
+    
     # First, we build the network, starting with an input layer
-    l_in = lasagne.layers.InputLayer(shape=(None, num_timesteps, num_asts))
+    if embed_dim != -1:
+        l_in = lasagne.layers.InputLayer(shape=(None, num_timesteps, embed_dim))
+    else: 
+         l_in = lasagne.layers.InputLayer(shape=(None, num_timesteps, num_asts))
 
     # We now build the LSTM layer which takes l_in as the input layer
     # We clip the gradients at GRAD_CLIP to prevent the problem of exploding gradients.
@@ -65,13 +68,13 @@ def _build_net_layers(num_timesteps, num_asts, hidden_size, learning_rate, grad_
     return l_in, l_out, l_out_slice
 
 
-def create_model(num_timesteps, num_asts, hidden_size, learning_rate, grad_clip=10, dropout_p=0.5, num_lstm_layers=1):
+def create_model(num_timesteps, num_asts,  hidden_size, learning_rate, embed_dim=-1, grad_clip=10, dropout_p=0.5, num_lstm_layers=1):
     '''
      returns train function which reports both loss and accuracy
      and test function, which also reports both loss and accuracy
     '''
     
-    l_in, l_out, l_out_slice = _build_net_layers(num_timesteps, num_asts, hidden_size, learning_rate, grad_clip, dropout_p, num_lstm_layers)
+    l_in, l_out, l_out_slice = _build_net_layers(num_timesteps, num_asts, hidden_size, learning_rate, embed_dim, grad_clip, dropout_p, num_lstm_layers)
     # pred should be of shape (batchsize, num_timesteps, num_asts)
     pred = lasagne.layers.get_output(l_out)
     # pred_slice should be of shape (batchsize, num_asts), only contains
