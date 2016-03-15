@@ -205,7 +205,7 @@ def predict_accuracy(DATA_SET_HOC, DATA_SZ, weighted_bigrams_bool = True, use_bi
               new_num_correct += traj_count
           else: 
             # (2) Predicting using Gold Baseline (AST = 0)
-            if ast == 0:
+            if ast == END_TOKEN:
               new_num_correct += traj_count
           new_num_total += traj_count
           # Update accuracy counts for this timestep
