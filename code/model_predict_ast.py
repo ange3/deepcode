@@ -120,9 +120,17 @@ def create_model(num_timesteps, num_asts,  hidden_size, learning_rate, embed_dim
 def _compute_loss_acc_pred(X, truth, compute_loss_acc):
     # a full pass over the given data without training
     # returns loss, raw accuracy, corrected accuracy and predictions
+    # Note: Accuracies are single values representing average accuracy over all timesteps
     loss, acc, pred = compute_loss_acc(X, truth)
     corrected_acc = compute_corrected_acc_on_ast_rows(X, truth, pred)
-    # TODO: Compute accuracies over timesteps
+    return loss, acc, corrected_acc, pred
+
+def _compute_loss_acc_pred_per_timestep(X, truth, compute_loss_acc):
+    # a full pass over the given data without training
+    # returns loss, raw accuracy, corrected accuracy and predictions
+    # Note: Accuracies is a list of values representing accuracy at each timestep
+    loss, acc, pred = compute_loss_acc(X, truth)
+    corrected_acc = compute_corrected_acc_on_ast_rows_per_timestep(X, truth, pred)
     return loss, acc, corrected_acc, pred
 
 
@@ -218,6 +226,31 @@ def compute_corrected_acc_on_ast_rows(X, truth, pred):
     return corrected_acc
 
 
+def compute_corrected_acc_on_ast_rows_per_timestep(X, truth, pred):
+    # Returns a list of accuracies at every timestep
+    batchsize, num_timesteps, num_asts = X.shape
+    timestep_accuracies = [(0,0) * num_timesteps] # [ timestep index: (correct_count, total_count) ]
+    correct_count = 0
+    total_count = 0
+    for n in xrange(batchsize):
+        for t in xrange(num_timesteps):
+            if np.argmax(X[n,t,:]) != 0:
+                # only include predictions not on the <END> token
+                correct_count, total_count = timestep_accuracies[t]
+                total_count += 1
+                if np.argmax(pred[n,t,:]) == truth[n,t]:
+                    correct_count += 1
+                timestep_accuracies[t] = (correct_count, total_count)
+    
+    print timestep_accuracies
+    # Calculate corrected accuracies
+    corrected_acc_list = []
+    for acc_for_timestep in timestep_accuracies:
+        correct_count, total_count = acc_for_timestep
+        corrected_acc = correct_count/float(total_count)
+        corrected_acc_list.append(corrected_acc)
+    print corrected_acc_list
+    return corrected_acc_list
 
 
 def compute_corrected_acc_on_ast_ids(X_ast_ids, truth_ast_ids, pred_ast_ids): 
@@ -236,17 +269,24 @@ def compute_corrected_acc_on_ast_ids(X_ast_ids, truth_ast_ids, pred_ast_ids):
 
 
 
-def check_accuracy(data, compute_loss_acc, dataset_name):
+def check_accuracy(data, compute_loss_acc, dataset_name, compute_acc_per_timestep_bool = False):
     X, truth = data
     print("Testing...")
     # After training, we compute and print the test error:
-
-    loss, raw_acc, corrected_acc, pred = _compute_loss_acc_pred(X, truth, compute_loss_acc)
+    if compute_acc_per_timestep_bool:
+        loss, raw_acc, corrected_acc, pred = _compute_loss_acc_pred_per_timestep(X, truth, compute_loss_acc)
+    else:
+        loss, raw_acc, corrected_acc, pred = _compute_loss_acc_pred(X, truth, compute_loss_acc)
 
     print("Final results:")
     print("  {} loss:\t\t\t{:.6f}".format(dataset_name, loss * 1.0))
     print("  {} raw accuracy:\t\t{:.2f} %".format(dataset_name, raw_acc * 100))
-    print("  {} corrected accuracy:\t{:.2f} %".format(dataset_name, corrected_acc * 100))
+    if compute_acc_per_timestep_bool:
+        print("  {} corrected accuracy".format(dataset_name))
+        for timestep, acc in enumerate(corrected_acc):
+            print ("  \t\t Timestep {}:\t{:.2f} %".format(timestep, acc * 100))
+    else:
+        print("  {} corrected accuracy:\t{:.2f} %".format(dataset_name, corrected_acc * 100))
 
     return loss, raw_acc, corrected_acc, pred
 
