@@ -229,7 +229,7 @@ def compute_corrected_acc_on_ast_rows(X, truth, pred):
 def compute_corrected_acc_on_ast_rows_per_timestep(X, truth, pred):
     # Returns a list of accuracies at every timestep
     batchsize, num_timesteps, num_asts = X.shape
-    timestep_accuracies = [(0,0) * num_timesteps] # [ timestep index: (correct_count, total_count) ]
+    timestep_accuracies = [(0,0) for i in xrange(num_timesteps)] # [ timestep index: (correct_count, total_count) ]
     correct_count = 0
     total_count = 0
     for n in xrange(batchsize):
