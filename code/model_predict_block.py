@@ -24,7 +24,7 @@ import theano.tensor as T
 import time
 import utils
 
-def _build_net_layers(num_timesteps, num_blocks, hidden_size, learning_rate, grad_clip=10, dropout_p=0.0, num_lstm_layers=1):
+def _build_net_layers(num_timesteps, num_blocks, hidden_size, learning_rate, grad_clip=10, dropout_p=0.0, num_lstm_layers=1, use_forward_and_backward_lstm=False):
     print("Building network ...")
    
     # First, we build the network, starting with an input layer
@@ -34,20 +34,25 @@ def _build_net_layers(num_timesteps, num_blocks, hidden_size, learning_rate, gra
     # We now build the LSTM layer which takes l_in as the input layer
     # We clip the gradients at GRAD_CLIP to prevent the problem of exploding gradients.
 
-    l_lstm_forward = lasagne.layers.LSTMLayer(
+    if use_forward_and_backward_lstm:
+        l_lstm_forward = lasagne.layers.LSTMLayer(
             l_in, hidden_size, grad_clipping=grad_clip,
             nonlinearity=lasagne.nonlinearities.tanh, mask_input=l_mask)
 
-    l_lstm_backward = lasagne.layers.LSTMLayer(
-            l_in, hidden_size, grad_clipping=grad_clip,
-            nonlinearity=lasagne.nonlinearities.tanh, backwards=True, mask_input=l_mask)
+        l_lstm_backward = lasagne.layers.LSTMLayer(
+                l_in, hidden_size, grad_clipping=grad_clip,
+                nonlinearity=lasagne.nonlinearities.tanh, backwards=True, mask_input=l_mask)
 
-    l_lstm = lasagne.layers.ConcatLayer(
-    [l_lstm_forward, l_lstm_backward], axis=-1, name='Sum 1')
-    # The l_forward layer creates an output of dimension (batch_size, num_timesteps, hidden_size)
+        l_lstm = lasagne.layers.ConcatLayer(
+        [l_lstm_forward, l_lstm_backward], axis=-1, name='Sum 1')
+        # The l_forward layer creates an output of dimension (batch_size, num_timesteps, hidden_size)
+        l_reshape = lasagne.layers.ReshapeLayer(l_lstm, (-1, hidden_size * 2))
+    else:
+        l_lstm = lasagne.layers.LSTMLayer(
+                l_in, hidden_size, grad_clipping=grad_clip,
+                nonlinearity=lasagne.nonlinearities.tanh, mask_input=l_mask)
+        l_reshape = lasagne.layers.ReshapeLayer(l_lstm, (-1, hidden_size))
 
-
-    l_reshape = lasagne.layers.ReshapeLayer(l_lstm_forward, (-1, hidden_size))
     l_dropout = lasagne.layers.DropoutLayer(l_reshape, p=dropout_p, rescale=True)
     l_out = lasagne.layers.DenseLayer(l_dropout,
         num_units=num_blocks,
@@ -66,13 +71,16 @@ def _build_net_layers(num_timesteps, num_blocks, hidden_size, learning_rate, gra
     return l_in, l_mask, l_out, l_out_slice, l_lstm, l_lstm_slice
 
 
-def create_model(num_timesteps, num_blocks, hidden_size, learning_rate, grad_clip=10, dropout_p=0.5, num_lstm_layers=1):
+def create_model(num_timesteps, num_blocks, hidden_size, learning_rate, \
+    grad_clip=10, dropout_p=0.5, num_lstm_layers=1, use_forward_and_backward_lstm=False):
     '''
      returns train function which reports both loss and accuracy
      and test function, which also reports both loss and accuracy
     '''
     
-    l_in, l_mask, l_out, l_out_slice, l_lstm, l_lstm_slice = _build_net_layers(num_timesteps, num_blocks, hidden_size, learning_rate, grad_clip, dropout_p, num_lstm_layers)
+    l_in, l_mask, l_out, l_out_slice, l_lstm, l_lstm_slice = \
+    _build_net_layers(num_timesteps, num_blocks, hidden_size, learning_rate, \
+        grad_clip, dropout_p, num_lstm_layers, use_forward_and_backward_lstm)
 
     inp = T.tensor3('input')
     truth = T.imatrix("truth")
@@ -122,7 +130,7 @@ def create_model(num_timesteps, num_blocks, hidden_size, learning_rate, grad_cli
 
     print("Compiling done!")
     
-    return train_loss_acc, compute_loss_acc, probs, generate_hidden_representations, compute_pred
+    return train_loss_acc, compute_loss_acc, probs, generate_hidden_representations, compute_pred, l_out
 
 
 def train(train_data, val_data, train_loss_acc, compute_loss_acc, compute_pred, num_epochs=5, batchsize=32, record_per_iter=False):

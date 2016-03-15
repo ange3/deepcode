@@ -22,10 +22,14 @@ import time
 import pickle
 import random
 from constants import *
+from sklearn.utils import shuffle
 
 
-def save_ast_embeddings(ast_embeddings, hoc_num):
-    np.save(AST_EMBEDDINGS_PREFIX + str(hoc_num) + MAT_SUFFIX, ast_embeddings)
+def save_ast_embeddings(ast_embeddings, hoc_num, description=''):
+    if description != '':
+        np.save(AST_EMBEDDINGS_PREFIX + str(hoc_num) + '_' + description + MAT_SUFFIX, ast_embeddings)
+    else:
+        p.save(AST_EMBEDDINGS_PREFIX + str(hoc_num) + MAT_SUFFIX, ast_embeddings)
 
 # ############################# Batch iterator ###############################
 # This is just a simple helper function iterating over training data in
@@ -450,6 +454,10 @@ def load_dataset_predict_block(hoc_num=7, data_sz=-1):
     # Note that block_index = 0 corresponds to the <END> token,
     # marking that the student has already finished.
     # The <END> token does not correspond to an AST.
+    # all_data has the asts in the same order as the original ast_mat.
+    # train, val and test are shuffled, so the ast_rows don't correspond
+    # to the initial rows in ast_mat, meaining the mapping ast_row to ast_id 
+    # does not apply to them.
     
     ast_mat = np.load(BLOCK_MAT_PREFIX + hoc_num + BLOCK_LIMIT_TIMESTEPS +  MAT_SUFFIX)
 
@@ -463,9 +471,13 @@ def load_dataset_predict_block(hoc_num=7, data_sz=-1):
     np.random.shuffle(ast_mat)
 
     num_asts, max_ast_len, num_blocks = ast_mat.shape
+
+    all_data = prepare_block_data_for_rnn(ast_mat)
     # Split data into train, val, test
     # TODO: Replace with kfold validation in the future
     # perhaps we can use sklearn kfold?
+
+    ast_mat = shuffle(ast_mat)
     train_mat = ast_mat[0:7*num_asts/8,:]
     val_mat =  ast_mat[7*num_asts/8: 15*num_asts/16 ,:]
     test_mat = ast_mat[15*num_asts/16:num_asts,:]
@@ -473,7 +485,6 @@ def load_dataset_predict_block(hoc_num=7, data_sz=-1):
     train_data = prepare_block_data_for_rnn(train_mat)
     val_data = prepare_block_data_for_rnn(val_mat)
     test_data = prepare_block_data_for_rnn(test_mat)
-    all_data = prepare_block_data_for_rnn(ast_mat)
 
     num_timesteps = train_data[0].shape[1]
 
