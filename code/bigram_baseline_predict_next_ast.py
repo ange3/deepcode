@@ -50,6 +50,15 @@ from model_predict_ast import compute_corrected_acc_on_ast_rows_per_timestep
 
 END_TOKEN_AST_ID = '-1'
 
+TRAJ_COUNT_FILEPATH_PRE = '../data/trajectory_count_files/counts_'
+TRAJ_COUNT_FILEPATH_POST = '.txt'
+
+TRAJ_ROW_MAP_FILEPATH_PRE = '../processed_data/map_traj_row_'
+TRAJ_ROW_MAP_FILEPATH_POST = '.pickle'
+
+AST_ROW_MAP_FILEPATH_PRE = '../processed_data/ast_id_level/map_ast_row_'
+AST_ROW_MAP_FILEPATH_POST = '.pickle'
+
 def load_traj_counts(hoc_num):
   '''
   Loads txt file with trajectory frequency counts
@@ -58,7 +67,7 @@ def load_traj_counts(hoc_num):
   Output: map {traj_id: count}
   '''
   traj_counts = {}
-  traj_count_filepath = '../data/trajectory_count_files/counts_' + str(hoc_num) + '.txt'
+  traj_count_filepath = TRAJ_COUNT_FILEPATH_PRE + str(hoc_num) + TRAJ_COUNT_FILEPATH_POST
   with open(traj_count_filepath, 'rb') as f:
     reader = csv.reader(f, dialect = 'excel' , delimiter = '\t')
     for row in reader:
@@ -76,7 +85,7 @@ def count_bigrams(x, hoc_num, using_weighted_traj_counts):
 
   traj_count_weight = 1
   if using_weighted_traj_counts:
-    map_traj_row_to_id = pickle.load(open('../processed_data/map_traj_row_' + str(hoc_num) + '.pickle', 'rb'))
+    map_traj_row_to_id = pickle.load(open(TRAJ_ROW_MAP_FILEPATH_PRE + str(hoc_num) + TRAJ_ROW_MAP_FILEPATH_POST, 'rb'))
     traj_count_map = load_traj_counts(hoc_num)
 
   bigram_count_map = {}
@@ -152,7 +161,7 @@ def make_gold_predictions(x, hoc_num):
 
   predictions = np.zeros((num_trajectories, num_timesteps, num_asts))
 
-  map_ast_id_to_row = pickle.load( open('../processed_data/ast_id_level/map_ast_row_' + str(hoc_num) + '.pickle', 'rb'))
+  map_ast_id_to_row = pickle.load( open(AST_ROW_MAP_FILEPATH_PRE + str(hoc_num) + AST_ROW_MAP_FILEPATH_POST, 'rb'))
   gold_solution_ast_row = map_ast_id_to_row['0']
 
   for n in xrange(num_trajectories):
