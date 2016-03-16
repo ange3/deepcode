@@ -36,7 +36,7 @@ BLOCK_STRING_TO_BLOCK_ROW_MAP = '../processed_data/block_level/map_block_string_
 MAT_SUFFIX = '.npy'
 MAP_SUFFIX = '.pickle'
 
-AST_EMBEDDINGS_PREFIX = '../processed_data/embeddings/ast_embeddings_hoc'
+AST_EMBEDDINGS_PREFIX = '../processed_data/embeddings/ast_embeddings_hoc_indiv'
 EMBED_AST_MAP_PREFIX = '../processed_data/block_level/map_row_index_to_ast_id_'
 
 # To specify which Hour of Code problems we are taking into account

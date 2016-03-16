@@ -25,11 +25,7 @@ from constants import *
 from sklearn.utils import shuffle
 
 
-def save_ast_embeddings(ast_embeddings, hoc_num, description=''):
-    if description != '':
-        np.save(AST_EMBEDDINGS_PREFIX + str(hoc_num) + '_' + description + MAT_SUFFIX, ast_embeddings)
-    else:
-        p.save(AST_EMBEDDINGS_PREFIX + str(hoc_num) + MAT_SUFFIX, ast_embeddings)
+
 
 # ############################# Batch iterator ###############################
 # This is just a simple helper function iterating over training data in
@@ -46,7 +42,7 @@ def iterate_minibatches(X, next_problem, truth, batchsize, shuffle=False):
     num_samples = X.shape[0]
     if shuffle:
         indices = np.arange(num_samples)
-        np.random.shuffle(indices)
+        indices = shuffle(indices, random_state=0)
     for start_idx in range(0, num_samples - batchsize + 1, batchsize):
         if shuffle:
             excerpt = indices[start_idx:start_idx + batchsize]
@@ -62,7 +58,7 @@ def iter_minibatches(data, batchsize, shuffle=False):
     num_samples = X.shape[0]
     if shuffle:
         indices = np.arange(num_samples)
-        np.random.shuffle(indices)
+        indices = shuffle(indices, random_state=0)
     for start_idx in range(0, num_samples - batchsize + 1, batchsize):
         if shuffle:
             excerpt = indices[start_idx:start_idx + batchsize]
@@ -341,68 +337,151 @@ def convert_pred_to_ast_ids(pred, row_to_ast_id_map):
     
     return pred_ast_ids
 
+def get_train_val_test_split(data, split=(float(7/8), float(1/16), float(1/16))):
+    ''' 
+    Input: tuple of numpy matrices, first dimension must have same size for 
+    all matrices.
+    Optional: split: a tuple with 3 values definining the split, the 3 numbers
+    must sum up to 1. E.g. (0.5, 0.25, 0.25)
+    return train_data, val_data, test_data, each of which is a tuple with the 
+    same number of elements as data
+    '''
 
-def load_dataset_predict_ast(hoc_num=7, data_sz=-1):
+    train_data = []
+    val_data = []
+    test_data = []
+    for mat in data:
+        mat_train = mat[0 : num_traj*split[0]]
+        train_data.append(mat_train)
+        mat_val =  mat[num_traj*split[0] : num_traj*(split[0]+split[1])]
+        val_data.append(mat_val)
+        mat_test = mat[num_traj*(split[0]+split[1]) : ]
+        test_data.append(mat_test)
+
+    train_data = tuple(train_data)
+    val_data = tuple(val_data)
+    test_data = tuple(test_data)
+
+    return train_data, val_data, test_data
+
+def load_dataset_predict_ast(hoc_num=2, data_sz=-1, use_embeddings=False):
+    # if DATA_SZ = -1, use entire data set
+    # For DATA_SZ, powers of 2 work best for performance.
+
     print('Preparing network inputs and targets, and the ast maps...')
     hoc_num = str(hoc_num)
     data_set = 'hoc' + hoc_num
-    # if DATA_SZ = -1, use entire data set
-    # For DATA_SZ, powers of 2 work best for performance.
-    ast_map_file = TRAJ_AST_MAP_PREFIX + hoc_num + MAP_SUFFIX
 
-    # Load AST ID to Row Map
-    ast_id_to_row_map = pickle.load(open( ast_map_file, "rb" ))
-    # Create Row to AST ID Map by inverting the previous one
-    row_to_ast_id_map = {v: k for k, v in ast_id_to_row_map.items()}
     # trajectories matrix for a single hoc exercise
     # shape (num_traj, max_traj_len, num_asts)
     # Note that ast_index = 0 corresponds to the <END> token,
     # marking that the student has already finished.
     # The <END> token does not correspond to an AST.
-
-    traj_mat_file = TRAJ_MAP_PREFIX + hoc_num + MAT_SUFFIX
-    traj_mat = np.load(traj_mat_file)
-
+    traj_mat = np.load(TRAJ_MAP_PREFIX + hoc_num + MAT_SUFFIX)
     # if data_sz specified, reduce matrix. 
     # Useful to create smaller data sets for testing purposes.
     if data_sz != -1:
         traj_mat = traj_mat[:data_sz]
-    print 'Trajectory matrix shape {}'.format(traj_mat.shape)
+    # print 'Trajectory matrix shape {}'.format(traj_mat.shape)
 
     # shuffle the first dimension of the matrix
-    np.random.shuffle(traj_mat)
+    traj_mat = shuffle(traj_mat, random_state=0)
+    
+    # Load AST ID to Row Map for trajectory matrix
+    traj_ast_id_to_row_map = pickle.load(open(TRAJ_AST_MAP_PREFIX + hoc_num + MAP_SUFFIX, "rb" ))
+    traj_row_to_ast_id_map = {v: k for k, v in traj_ast_id_to_row_map.items()}
 
-    num_traj, max_traj_len, num_asts = traj_mat.shape
-    # Split data into train, val, test
-    # TODO: Replace with kfold validation in the future
-    # perhaps we can use sklearn kfold?
-    train_mat = traj_mat[0:7*num_traj/8,:]
-    val_mat =  traj_mat[7*num_traj/8: 15*num_traj/16 ,:]
-    test_mat = traj_mat[15*num_traj/16:num_traj,:]
+    X, y = None, None
+    if use_embeddings:
+        # print(AST_EMBEDDINGS_PREFIX + str(hoc_num) + MAT_SUFFIX)
+        ast_embeddings = np.load(AST_EMBEDDINGS_PREFIX + str(hoc_num) + MAT_SUFFIX)
 
-    train_data = prepare_traj_data_for_rnn(train_mat)
-    val_data = prepare_traj_data_for_rnn(val_mat)
-    test_data = prepare_traj_data_for_rnn(test_mat)
+        embed_ast_map_file = EMBED_AST_MAP_PREFIX + hoc_num + MAP_SUFFIX
+        embed_row_to_ast_id_map = pickle.load(open(embed_ast_map_file, "rb"))
+        embed_ast_id_to_row_map = {v: k for k, v in embed_row_to_ast_id_map.items()}
 
+        ast_maps = {
+            'traj_id_to_row': traj_ast_id_to_row_map,
+            'traj_row_to_id' : traj_row_to_ast_id_map,
+            'embed_id_to_row' : embed_ast_id_to_row_map,
+            'embed_row_to_id' : embed_row_to_ast_id_map,
+        }
 
-    X_train, y_train = train_data
-    X_val, y_val = val_data
-    X_test, y_test = test_data
-    print 'X_train shape {}'.format(X_train.shape)
-    print 'y_train shape {}'.format(y_train.shape)
-    print 'X_val shape {}'.format(X_val.shape)
-    print 'X_test shape {}'.format(X_test.shape)
-    num_train, num_timesteps, num_asts = X_train.shape
+        X, y = prepare_traj_data_for_rnn_using_embeddings(traj_mat, \
+            ast_embeddings, traj_row_to_ast_id_map, embed_ast_id_to_row_map)
+    else:
+        ast_maps = {
+            'traj_id_to_row': traj_ast_id_to_row_map,
+            'traj_row_to_id' : traj_row_to_ast_id_map,
+        }
 
-    # print y_train[:10]
-    # print X_train[:10,:, :10]
+        X, y = prepare_traj_data_for_rnn(traj_mat)
 
-    X_train_ast_ids, y_train_ast_ids = convert_data_to_ast_ids(train_data, row_to_ast_id_map)
-    # print X_train_ast_ids[:10]
-    # print y_train_ast_ids[:10]
-    print 'num_timesteps {}'.format(num_timesteps)
     print ("Inputs and targets done!")
-    return train_data, val_data, test_data, ast_id_to_row_map, row_to_ast_id_map, num_timesteps, num_asts
+    return  X, y, ast_maps, num_asts
+
+
+# def load_dataset_predict_ast(hoc_num=7, data_sz=-1, use_embeddings=False):
+#     print('Preparing network inputs and targets, and the ast maps...')
+#     hoc_num = str(hoc_num)
+#     data_set = 'hoc' + hoc_num
+#     # if DATA_SZ = -1, use entire data set
+#     # For DATA_SZ, powers of 2 work best for performance.
+#     ast_map_file = TRAJ_AST_MAP_PREFIX + hoc_num + MAP_SUFFIX
+
+#     # Load AST ID to Row Map
+#     ast_id_to_row_map = pickle.load(open( ast_map_file, "rb" ))
+#     # Create Row to AST ID Map by inverting the previous one
+#     row_to_ast_id_map = {v: k for k, v in ast_id_to_row_map.items()}
+#     # trajectories matrix for a single hoc exercise
+#     # shape (num_traj, max_traj_len, num_asts)
+#     # Note that ast_index = 0 corresponds to the <END> token,
+#     # marking that the student has already finished.
+#     # The <END> token does not correspond to an AST.
+
+#     traj_mat_file = TRAJ_MAP_PREFIX + hoc_num + MAT_SUFFIX
+#     traj_mat = np.load(traj_mat_file)
+
+#     # if data_sz specified, reduce matrix. 
+#     # Useful to create smaller data sets for testing purposes.
+#     if data_sz != -1:
+#         traj_mat = traj_mat[:data_sz]
+#     print 'Trajectory matrix shape {}'.format(traj_mat.shape)
+
+#     # shuffle the first dimension of the matrix
+#     traj_mat = shuffle(traj_mat, random_state=0)
+
+#     num_traj, max_traj_len, num_asts = traj_mat.shape
+#     # Split data into train, val, test
+#     # TODO: Replace with kfold validation in the future
+#     # perhaps we can use sklearn kfold?
+#     train_mat = traj_mat[0:7*num_traj/8,:]
+#     val_mat =  traj_mat[7*num_traj/8: 15*num_traj/16 ,:]
+#     test_mat = traj_mat[15*num_traj/16:num_traj,:]
+
+#     train_data = prepare_traj_data_for_rnn(train_mat)
+#     val_data = prepare_traj_data_for_rnn(val_mat)
+#     test_data = prepare_traj_data_for_rnn(test_mat)
+
+
+#     X_train, y_train = train_data
+#     X_val, y_val = val_data
+#     X_test, y_test = test_data
+#     print 'X_train shape {}'.format(X_train.shape)
+#     print 'y_train shape {}'.format(y_train.shape)
+#     print 'X_val shape {}'.format(X_val.shape)
+#     print 'X_test shape {}'.format(X_test.shape)
+#     num_train, num_timesteps, num_asts = X_train.shape
+
+#     # print y_train[:10]
+#     # print X_train[:10,:, :10]
+
+#     X_train_ast_ids, y_train_ast_ids = convert_data_to_ast_ids(train_data, row_to_ast_id_map)
+#     # print X_train_ast_ids[:10]
+#     # print y_train_ast_ids[:10]
+#     print 'num_timesteps {}'.format(num_timesteps)
+#     print ("Inputs and targets done!")
+#     return train_data, val_data, test_data, ast_id_to_row_map, row_to_ast_id_map, num_timesteps, num_asts
 
 
 def load_dataset_predict_block_all_hocs():
@@ -437,27 +516,6 @@ def load_dataset_predict_block(hoc_num=7, data_sz=-1):
     print('Preparing network inputs and targets, and the block maps for hoc {}'.format(hoc_num))
     hoc_num = str(hoc_num)
     data_set = 'hoc' + hoc_num
-    # if DATA_SZ = -1, use entire data set
-    # For DATA_SZ, powers of 2 work best for performance.
-
-
-    # block_map_file = '../processed_data/map_block_string_to_block_id' + hoc_num + '.pickle'
-
-    # # Load AST ID to Row Map
-    # block_id_to_row_map = pickle.load(open( block_map_file, "rb" ))
-    # # Create Row to AST ID Map by inverting the previous one
-    # row_to_block_id_map = {v: k for k, v in block_id_to_row_map.items()}
-
-
-    # trajectories matrix for a single hoc exercise
-    # shape (num_traj, max_traj_len, num_blocks)
-    # Note that block_index = 0 corresponds to the <END> token,
-    # marking that the student has already finished.
-    # The <END> token does not correspond to an AST.
-    # all_data has the asts in the same order as the original ast_mat.
-    # train, val and test are shuffled, so the ast_rows don't correspond
-    # to the initial rows in ast_mat, meaining the mapping ast_row to ast_id 
-    # does not apply to them.
     
     ast_mat = np.load(BLOCK_MAT_PREFIX + hoc_num + BLOCK_LIMIT_TIMESTEPS +  MAT_SUFFIX)
 
@@ -467,9 +525,6 @@ def load_dataset_predict_block(hoc_num=7, data_sz=-1):
         ast_mat = ast_mat[:data_sz]
     # print 'Trajectory matrix shape {}'.format(ast_mat.shape)
 
-    # shuffle the first dimension of the matrix
-    np.random.shuffle(ast_mat)
-
     num_asts, max_ast_len, num_blocks = ast_mat.shape
 
     all_data = prepare_block_data_for_rnn(ast_mat)
@@ -477,7 +532,7 @@ def load_dataset_predict_block(hoc_num=7, data_sz=-1):
     # TODO: Replace with kfold validation in the future
     # perhaps we can use sklearn kfold?
 
-    ast_mat = shuffle(ast_mat)
+    ast_mat = shuffle(ast_mat, random_state=0)
     train_mat = ast_mat[0:7*num_asts/8,:]
     val_mat =  ast_mat[7*num_asts/8: 15*num_asts/16 ,:]
     test_mat = ast_mat[15*num_asts/16:num_asts,:]
@@ -492,8 +547,12 @@ def load_dataset_predict_block(hoc_num=7, data_sz=-1):
     # return train_data, val_data, test_data, block_id_to_row_map, row_to_block_id_map, num_timesteps, num_blocks
     return train_data, val_data, test_data, all_data, num_timesteps, num_blocks
 
-def save_ast_embeddings(ast_embeddings, hoc_num):
-    np.save(AST_EMBEDDINGS_PREFIX + str(hoc_num) + MAT_SUFFIX, ast_embeddings)
+
+def save_ast_embeddings(ast_embeddings, hoc_num, description=''):
+    if description != '':
+        np.save(AST_EMBEDDINGS_PREFIX + '_' + description + str(hoc_num) + MAT_SUFFIX, ast_embeddings)
+    else:
+        p.save(AST_EMBEDDINGS_PREFIX + str(hoc_num) + MAT_SUFFIX, ast_embeddings)
 
 def save_ast_embeddings_for_all_hocs(ast_embeddings, split_indices):
     """ input: matrix with embeddings for asts across all HOCs. 
@@ -503,56 +562,6 @@ def save_ast_embeddings_for_all_hocs(ast_embeddings, split_indices):
     ast_embeddings_list = np.split(ast_embeddings, split_indices)
     for hoc in xrange(HOC_MIN, HOC_MAX + 1):
         save_ast_embeddings(ast_embeddings_list[hoc - 1], hoc)
-
-
-def load_dataset_predict_ast_using_embeddings(hoc_num=2, data_sz=-1):
-    # if DATA_SZ = -1, use entire data set
-    # For DATA_SZ, powers of 2 work best for performance.
-
-    print('Preparing network inputs and targets, and the ast maps...')
-    hoc_num = str(hoc_num)
-    data_set = 'hoc' + hoc_num
-
-    # trajectories matrix for a single hoc exercise
-    # shape (num_traj, max_traj_len, num_asts)
-    # Note that ast_index = 0 corresponds to the <END> token,
-    # marking that the student has already finished.
-    # The <END> token does not correspond to an AST.
-    traj_mat_file = TRAJ_MAP_PREFIX + hoc_num + MAT_SUFFIX
-    traj_mat = np.load(traj_mat_file)
-    
-    traj_ast_map_file = TRAJ_AST_MAP_PREFIX + hoc_num + MAP_SUFFIX
-    # Load AST ID to Row Map for trajectory matrix
-    traj_ast_id_to_row_map = pickle.load(open( traj_ast_map_file, "rb" ))
-    traj_row_to_ast_id_map = {v: k for k, v in traj_ast_id_to_row_map.items()}
-
-    ast_embeddings = np.load(AST_EMBEDDINGS_PREFIX + str(hoc_num) + MAT_SUFFIX)
-
-    embed_ast_map_file = EMBED_AST_MAP_PREFIX + hoc_num + MAP_SUFFIX
-    embed_row_to_ast_id_map = pickle.load(open(embed_ast_map_file, "rb"))
-    embed_ast_id_to_row_map = {v: k for k, v in embed_row_to_ast_id_map.items()}
-
-    ast_maps = {
-        'traj_id_to_row': traj_ast_id_to_row_map,
-        'traj_row_to_id' : traj_row_to_ast_id_map,
-        'embed_id_to_row' : embed_ast_id_to_row_map,
-        'embed_row_to_id' : embed_row_to_ast_id_map,
-    }
-
-    # if data_sz specified, reduce matrix. 
-    # Useful to create smaller data sets for testing purposes.
-    if data_sz != -1:
-        traj_mat = traj_mat[:data_sz]
-    print 'Trajectory matrix shape {}'.format(traj_mat.shape)
-    num_asts = traj_mat.shape[2]
-
-    # shuffle the first dimension of the matrix
-    np.random.shuffle(traj_mat)
-
-    X, y = prepare_traj_data_for_rnn_using_embeddings(traj_mat, ast_embeddings, traj_row_to_ast_id_map, embed_ast_id_to_row_map)
-
-    print ("Inputs and targets done!")
-    return  X, y, ast_maps, num_asts
 
 
 def print_sample_program(hoc_num=7, ast_id=0):
@@ -592,7 +601,13 @@ def convert_to_block_strings(mat_with_block_rows):
 
 if __name__ == "__main__":
     print "You are running utils.py directly, so you must be testing it!"
-    load_dataset_predict_block_all_hocs()
+    # load_dataset_predict_block_all_hocs()
+    X, y, ast_maps, num_asts = load_dataset_predict_ast(hoc_num=2, data_sz=-1, use_embeddings=False)
+    print X.shape
+    print y.shape
+    X, y, ast_maps, num_asts = load_dataset_predict_ast(hoc_num=2, data_sz=-1, use_embeddings=True)
+    print X.shape
+    print y.shape
     # for hoc in xrange(1,10):
     #     print_sample_program(hoc_num=hoc,ast_id=0)
 
