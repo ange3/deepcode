@@ -1,49 +1,7 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-#
-# File: utils.py
-# @Author: Angela Sy
-# @created: Feb 26 2016
-#
-#==============================================================================
-# DESCRIPTION:
-# This file calculates the baseline accuracy using simple bigrams
-# for the task of predicting the next AST ID in a trajectory.
-# Concretely, for every AST ID X, we take the most common bigram that starts with X --> (X, Y) and predict Y.
-# This prediction is pre-calculated and defined in the bigram guesses map.
-#
-# BIGRAMS
-# There are 2 types of bigram guesses we use: 
-#    unweighted: each pair of AST IDs only contributes to the count of thair pair once
-#    weighted: weights the count of each pair by the frequency of that trajectory
-# For example, if trajectory 1 had a count of 100 students who used that trajectory,
-#    unweighted: every bigram of AST IDs in trajectory 1 get count of 1
-#    weighted: every bigram of AST IDs in trajectory 1 get count of 1 * 100
-#
-# PREDICTION ACCURACY
-# Similarly, prediction accuracy can be unweighted or weighted in the same fashion.
-#==============================================================================
-# CURRENT STATUS: Complete
-#==============================================================================
-# USAGE: 
-# From command line, run  python bigram_baseline_predict_next_ast.py
-#==============================================================================
-#
-###############################################################################
 
 
-# Python libraries
-import numpy as np
-import random
-import sys, os
-import csv
-import matplotlib.pyplot as plt
 from itertools import groupby
-import pickle
 
-# our own modules
-from utils import *
-from visualize import *
 
 # Predicted next AST based on bigrams
 code_org_data_bigrams_guess_unweighted_map = {
@@ -94,8 +52,6 @@ trajectory_count_map = {
   8: "../../data/trajectory_count_files/counts_8.txt",
   9: "../../data/trajectory_count_files/counts_9.txt",
 }
-
-END_TOKEN = -1
 
 def predict_accuracy(DATA_SET_HOC, DATA_SZ, weighted_bigrams_bool = True, use_bigrams_prediction_bool = True, accuracy_per_timestep = False):
   '''
@@ -241,50 +197,3 @@ def predict_accuracy(DATA_SET_HOC, DATA_SZ, weighted_bigrams_bool = True, use_bi
     return accuracy
 
   return acc_per_timestep
-
-
-if __name__ == "__main__":
-  '''
-  Runs through given problems and returns accuracy scores using given method.
-  See predict_accuracy function for description of methods.
-
-  Set ff:
-    USE_BIGRAMS_TO_PREDICT (bigrams or gold solution method for prediction)
-    USE_WEIGHTED_BIGRAMS (weighted or unweighted bigram files)
-    ACCURACY_PER_TIMESTEP (return accuracy at every timestep or not)
-
-  Saves a list of values representing accuracy for each HOC, where these accuracy values can be
-  (1) a single accuracy float value for each HOC or
-  (2) a list of accuracy-per-timestep values
-    depending on return value of predict_accuracy 
-  '''
-
-  START_HOC = 1
-  END_HOC = 9
-
-  DATA_SET_HOC = xrange(START_HOC, END_HOC+1)
-  DATA_SZ = 100000
-
-  USE_WEIGHTED_BIGRAMS = True
-  USE_BIGRAMS_TO_PREDICT = True
-  ACCURACY_PER_TIMESTEP = True
-
-  acc_list = []
-  for hoc in DATA_SET_HOC:
-    acc = predict_accuracy(hoc, DATA_SZ, weighted_bigrams_bool = USE_WEIGHTED_BIGRAMS, use_bigrams_prediction_bool = USE_BIGRAMS_TO_PREDICT, accuracy_per_timestep = ACCURACY_PER_TIMESTEP)
-    acc_list.append(acc)
-
-  print '*--*--*' * 10
-  print 'List of accuracies'
-  print 'HOC numbers:', START_HOC, ' to ', END_HOC
-  print 'Bigram Accuracies:'
-  for hoc_index, hoc_acc in enumerate(acc_list):
-    print 'HOC', str(START_HOC + hoc_index)
-    print hoc_acc
-
-  filename = 'baseline_results/bigram_acc_per_timestep.pickle'
-  pickle.dump(acc_list, open (filename, 'wb'))
-  print '-- SAVING'
-  print filename
-
-
