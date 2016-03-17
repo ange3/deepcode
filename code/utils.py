@@ -25,8 +25,6 @@ from constants import *
 from sklearn.utils import shuffle
 
 
-
-
 # ############################# Batch iterator ###############################
 # This is just a simple helper function iterating over training data in
 # mini-batches of a particular size, optionally in random order. It assumes
@@ -36,19 +34,6 @@ from sklearn.utils import shuffle
 # them to GPU at once for slightly improved performance. This would involve
 # several changes in the main program, though, and is not demonstrated here.
 # taken from lasagne mnist example.
-def iterate_minibatches(X, next_problem, truth, batchsize, shuffle=False):
-    assert(X.shape[0] == truth.shape[0])
-    assert(X.shape[0] == next_problem.shape[0])
-    num_samples = X.shape[0]
-    if shuffle:
-        indices = np.arange(num_samples)
-        indices = shuffle(indices, random_state=0)
-    for start_idx in range(0, num_samples - batchsize + 1, batchsize):
-        if shuffle:
-            excerpt = indices[start_idx:start_idx + batchsize]
-        else:
-            excerpt = slice(start_idx, start_idx + batchsize)
-        yield X[excerpt], next_problem[excerpt], truth[excerpt]
 
 # better version that is flexible in terms of input
 # data is a list of matrices for a data set, for example [X, y]
@@ -65,45 +50,6 @@ def iter_minibatches(data, batchsize, shuffle=False):
         else:
             excerpt = slice(start_idx, start_idx + batchsize)
         yield [d[excerpt] for d in data]
-
-
-# just a test to make sure that iterate_minibatches works!
-# batchsize = 50
-# for batch in utils.iterate_minibatches(X_train, next_problem_train, truth_train, batchsize, shuffle=False):
-#     X_, next_problem_, truth_  = batch
-#     print X_.shape
-#     print next_problem_.shape
-
-
-# To use on synthetic data set
-# DEPRECATED VERSION
-# TODO: REMOVE THIS AFTER WE DETERMINED THAT NO PROGRAM STILL USES IT
-def vectorize_syn_data(data_raw, num_timesteps):
-    num_samples = data_raw.shape[0]
-    num_problems = data_raw.shape[1]
-    X = np.zeros((num_samples, num_timesteps, num_problems * 2), dtype=np.bool)
-    y = np.zeros((num_samples, num_timesteps), dtype=np.int)
-
-    # Create 3-dimensional input tensor with one-hot encodings for each sample
-    # the dimension of each vector for a student i and time t is 2 * num_problems
-    # where the first half corresponds to the correctly answered problems and the
-    # second half to the incorrectly answered ones.
-    for i in xrange(num_samples):
-        
-        # for the first time step. Done separately so we can populate the output 
-        # tensor at the same time, which is shifted back by 1.
-
-        for t in xrange(0,num_timesteps):
-            p = t # since timestep t corresponds to problem p where t=p
-            if data_raw[i,p] == 1:
-                X[i, t, p] = 1 
-            else:
-                X[i, t, num_problems + p] = 1
-            # this is a special case for the synthetic data set, where the next problem 
-            # is just the current problem index + 1
-            y[i,t] = p + 1
-    corr = np.copy(data_raw) # Correctness indicates which problem a student has answered correctly
-    return X, y, corr
 
 
 def vectorize_data(data_raw):
@@ -258,7 +204,6 @@ def prepare_block_data_for_rnn(raw_matrix):
     return X, mask, y
 
 def convert_data_to_ast_ids(data, row_to_ast_id_map):
-
     '''
     INPUT:
     data = (X,y)
@@ -271,7 +216,6 @@ def convert_data_to_ast_ids(data, row_to_ast_id_map):
     y_ast_ids: (batchsize, num_timesteps)
 
     '''
-
     X, y = data
     batchsize, num_timesteps, num_asts = X.shape
     X_ast_ids = np.zeros((batchsize, num_timesteps))
@@ -337,7 +281,7 @@ def convert_pred_to_ast_ids(pred, row_to_ast_id_map):
     
     return pred_ast_ids
 
-def get_train_val_test_split(data, split=(float(7/8), float(1/16), float(1/16))):
+def get_train_val_test_split(data, split=(float(7)/8, float(1)/16, float(1)/16)):
     ''' 
     Input: tuple of numpy matrices, first dimension must have same size for 
     all matrices.
@@ -346,16 +290,16 @@ def get_train_val_test_split(data, split=(float(7/8), float(1/16), float(1/16)))
     return train_data, val_data, test_data, each of which is a tuple with the 
     same number of elements as data
     '''
-
+    num_traj = data[0].shape[0]
     train_data = []
     val_data = []
     test_data = []
     for mat in data:
-        mat_train = mat[0 : num_traj*split[0]]
+        mat_train = mat[: int(num_traj*split[0])]
         train_data.append(mat_train)
-        mat_val =  mat[num_traj*split[0] : num_traj*(split[0]+split[1])]
+        mat_val =  mat[int(num_traj*split[0]) : int(num_traj*(split[0]+split[1]))]
         val_data.append(mat_val)
-        mat_test = mat[num_traj*(split[0]+split[1]) : ]
+        mat_test = mat[int(num_traj*(split[0]+split[1])) : ]
         test_data.append(mat_test)
 
     train_data = tuple(train_data)
@@ -364,10 +308,22 @@ def get_train_val_test_split(data, split=(float(7/8), float(1/16), float(1/16)))
 
     return train_data, val_data, test_data
 
-def load_dataset_predict_ast(hoc_num=2, data_sz=-1, use_embeddings=False):
-    # if DATA_SZ = -1, use entire data set
-    # For DATA_SZ, powers of 2 work best for performance.
 
+
+def load_dataset_predict_ast(hoc_num=2, data_sz=-1, use_embeddings=False):
+    '''
+    if use_embeddings is True:
+        the X matrices contain embedding vectors 
+        for each ast within a trajectory.
+        so output shapes would be 
+        X.shape = (num_samples, num_timesteps, embedding_size)
+        y.shape = (num_samples, num_timesteps)
+    else:
+        output shapes would be 
+        X.shape = (num_samples, num_timesteps, num_asts)
+        y.shape = (num_samples, num_timesteps)
+
+    '''
     print('Preparing network inputs and targets, and the ast maps...')
     hoc_num = str(hoc_num)
     data_set = 'hoc' + hoc_num
@@ -386,6 +342,7 @@ def load_dataset_predict_ast(hoc_num=2, data_sz=-1, use_embeddings=False):
 
     # shuffle the first dimension of the matrix
     traj_mat = shuffle(traj_mat, random_state=0)
+    num_asts = traj_mat.shape[2]
     
     # Load AST ID to Row Map for trajectory matrix
     traj_ast_id_to_row_map = pickle.load(open(TRAJ_AST_MAP_PREFIX + hoc_num + MAP_SUFFIX, "rb" ))
@@ -394,7 +351,7 @@ def load_dataset_predict_ast(hoc_num=2, data_sz=-1, use_embeddings=False):
     X, y = None, None
     if use_embeddings:
         # print(AST_EMBEDDINGS_PREFIX + str(hoc_num) + MAT_SUFFIX)
-        ast_embeddings = np.load(AST_EMBEDDINGS_PREFIX + str(hoc_num) + MAT_SUFFIX)
+        ast_embeddings = np.load(AST_EMBEDDINGS_PREFIX_STEM + AST_EMBEDDINGS_VARIATION +  str(hoc_num) + MAT_SUFFIX)
 
         embed_ast_map_file = EMBED_AST_MAP_PREFIX + hoc_num + MAP_SUFFIX
         embed_row_to_ast_id_map = pickle.load(open(embed_ast_map_file, "rb"))
@@ -419,6 +376,88 @@ def load_dataset_predict_ast(hoc_num=2, data_sz=-1, use_embeddings=False):
 
     print ("Inputs and targets done!")
     return  X, y, ast_maps, num_asts
+
+
+
+def load_dataset_predict_block_all_hocs():
+    '''
+    wrapper function to load predict_block data for all hocs together, so we can
+    train a single model for all hocs.
+    '''
+    X_all_hocs = []
+    mask_all_hocs = []
+    y_all_hocs = []
+    hocs_samples_count = []
+    split_indices =  []
+    hoc_to_indices = {}
+    total_count = 0
+    for hoc in xrange(1,10):
+        train_data, val_data, test_data, all_data, num_timesteps, num_blocks  = load_dataset_predict_block(hoc_num=hoc)
+        X, mask, y = all_data
+        X_all_hocs.append(X)
+        mask_all_hocs.append(mask)
+        y_all_hocs.append(y)
+        hocs_samples_count.append(all_data[0].shape[0])
+        total_count += all_data[0].shape[0]
+        split_indices.append(total_count)
+    
+    # we don't need the last split index for np.split(), otherwise the last 
+    # split will be an empty array
+    del split_indices[-1]
+    X_all_hocs_mat = reduce(lambda a,b: np.concatenate([a,b], axis=0), X_all_hocs)
+    mask_all_hocs_mat = reduce(lambda a,b: np.concatenate([a,b], axis=0), mask_all_hocs)
+    y_all_hocs_mat = reduce(lambda a,b: np.concatenate([a,b], axis=0), y_all_hocs)
+
+    return X_all_hocs_mat, mask_all_hocs_mat, y_all_hocs_mat, split_indices
+
+
+def load_dataset_predict_block(hoc_num=7, data_sz=-1):
+    print('Preparing network inputs and targets, and the block maps for hoc {}'.format(hoc_num))
+    hoc_num = str(hoc_num)
+    data_set = 'hoc' + hoc_num
+    
+    ast_mat = np.load(BLOCK_MAT_PREFIX + hoc_num + BLOCK_LIMIT_TIMESTEPS +  MAT_SUFFIX)
+
+    # if data_sz specified, reduce matrix. 
+    # Useful to create smaller data sets for testing purposes.
+    if data_sz != -1:
+        ast_mat = ast_mat[:data_sz]
+    # print 'Trajectory matrix shape {}'.format(ast_mat.shape)
+
+    num_asts, max_ast_len, num_blocks = ast_mat.shape
+
+    all_data = prepare_block_data_for_rnn(ast_mat)
+
+    ast_mat = shuffle(ast_mat, random_state=0)
+    train_mat = ast_mat[0:7*num_asts/8,:]
+    val_mat =  ast_mat[7*num_asts/8: 15*num_asts/16 ,:]
+    test_mat = ast_mat[15*num_asts/16:num_asts,:]
+
+    train_data = prepare_block_data_for_rnn(train_mat)
+    val_data = prepare_block_data_for_rnn(val_mat)
+    test_data = prepare_block_data_for_rnn(test_mat)
+
+    num_timesteps = train_data[0].shape[1]
+
+    # print ("Inputs and targets done!")
+    # return train_data, val_data, test_data, block_id_to_row_map, row_to_block_id_map, num_timesteps, num_blocks
+    return train_data, val_data, test_data, all_data, num_timesteps, num_blocks
+
+
+def save_ast_embeddings(ast_embeddings, hoc_num, description=''):
+    if description != '':
+        np.save(AST_EMBEDDINGS_PREFIX_STEM + description + '_' + str(hoc_num) + MAT_SUFFIX, ast_embeddings)
+    else:
+        np.save(AST_EMBEDDINGS_PREFIX_STEM + str(hoc_num) + MAT_SUFFIX, ast_embeddings)
+
+def save_ast_embeddings_for_all_hocs(ast_embeddings, split_indices):
+    """ input: matrix with embeddings for asts across all HOCs. 
+        We need to split up this matrix by asts, using the split_indices list 
+        we created when we concatenated the data across all hocs.
+    """
+    ast_embeddings_list = np.split(ast_embeddings, split_indices)
+    for hoc in xrange(HOC_MIN, HOC_MAX + 1):
+        save_ast_embeddings(ast_embeddings_list[hoc - 1], hoc)
 
 
 # def load_dataset_predict_ast(hoc_num=7, data_sz=-1, use_embeddings=False):
@@ -483,131 +522,16 @@ def load_dataset_predict_ast(hoc_num=2, data_sz=-1, use_embeddings=False):
 #     print ("Inputs and targets done!")
 #     return train_data, val_data, test_data, ast_id_to_row_map, row_to_ast_id_map, num_timesteps, num_asts
 
-
-def load_dataset_predict_block_all_hocs():
-    X_all_hocs = []
-    mask_all_hocs = []
-    y_all_hocs = []
-    hocs_samples_count = []
-    split_indices =  []
-    hoc_to_indices = {}
-    total_count = 0
-    for hoc in xrange(1,10):
-        train_data, val_data, test_data, all_data, num_timesteps, num_blocks  = load_dataset_predict_block(hoc_num=hoc)
-        X, mask, y = all_data
-        X_all_hocs.append(X)
-        mask_all_hocs.append(mask)
-        y_all_hocs.append(y)
-        hocs_samples_count.append(all_data[0].shape[0])
-        total_count += all_data[0].shape[0]
-        split_indices.append(total_count)
-    
-    # we don't need the last split index for np.split(), otherwise the last 
-    # split will be an empty array
-    del split_indices[-1]
-    X_all_hocs_mat = reduce(lambda a,b: np.concatenate([a,b], axis=0), X_all_hocs)
-    mask_all_hocs_mat = reduce(lambda a,b: np.concatenate([a,b], axis=0), mask_all_hocs)
-    y_all_hocs_mat = reduce(lambda a,b: np.concatenate([a,b], axis=0), y_all_hocs)
-
-    return X_all_hocs_mat, mask_all_hocs_mat, y_all_hocs_mat, split_indices
-
-
-def load_dataset_predict_block(hoc_num=7, data_sz=-1):
-    print('Preparing network inputs and targets, and the block maps for hoc {}'.format(hoc_num))
-    hoc_num = str(hoc_num)
-    data_set = 'hoc' + hoc_num
-    
-    ast_mat = np.load(BLOCK_MAT_PREFIX + hoc_num + BLOCK_LIMIT_TIMESTEPS +  MAT_SUFFIX)
-
-    # if data_sz specified, reduce matrix. 
-    # Useful to create smaller data sets for testing purposes.
-    if data_sz != -1:
-        ast_mat = ast_mat[:data_sz]
-    # print 'Trajectory matrix shape {}'.format(ast_mat.shape)
-
-    num_asts, max_ast_len, num_blocks = ast_mat.shape
-
-    all_data = prepare_block_data_for_rnn(ast_mat)
-    # Split data into train, val, test
-    # TODO: Replace with kfold validation in the future
-    # perhaps we can use sklearn kfold?
-
-    ast_mat = shuffle(ast_mat, random_state=0)
-    train_mat = ast_mat[0:7*num_asts/8,:]
-    val_mat =  ast_mat[7*num_asts/8: 15*num_asts/16 ,:]
-    test_mat = ast_mat[15*num_asts/16:num_asts,:]
-
-    train_data = prepare_block_data_for_rnn(train_mat)
-    val_data = prepare_block_data_for_rnn(val_mat)
-    test_data = prepare_block_data_for_rnn(test_mat)
-
-    num_timesteps = train_data[0].shape[1]
-
-    # print ("Inputs and targets done!")
-    # return train_data, val_data, test_data, block_id_to_row_map, row_to_block_id_map, num_timesteps, num_blocks
-    return train_data, val_data, test_data, all_data, num_timesteps, num_blocks
-
-
-def save_ast_embeddings(ast_embeddings, hoc_num, description=''):
-    if description != '':
-        np.save(AST_EMBEDDINGS_PREFIX + '_' + description + str(hoc_num) + MAT_SUFFIX, ast_embeddings)
-    else:
-        p.save(AST_EMBEDDINGS_PREFIX + str(hoc_num) + MAT_SUFFIX, ast_embeddings)
-
-def save_ast_embeddings_for_all_hocs(ast_embeddings, split_indices):
-    """ input: matrix with embeddings for asts across all HOCs. 
-        We need to split up this matrix by asts, using the split_indices list 
-        we created when we concatenated the data across all hocs.
-    """
-    ast_embeddings_list = np.split(ast_embeddings, split_indices)
-    for hoc in xrange(HOC_MIN, HOC_MAX + 1):
-        save_ast_embeddings(ast_embeddings_list[hoc - 1], hoc)
-
-
-def print_sample_program(hoc_num=7, ast_id=0):
-    hoc_num = str(hoc_num)
-    embed_ast_map_file = EMBED_AST_MAP_PREFIX + hoc_num + MAP_SUFFIX
-    embed_row_to_ast_id_map = pickle.load(open(embed_ast_map_file, "rb"))
-    embed_ast_id_to_row_map = {v: k for k, v in embed_row_to_ast_id_map.items()}
-    ast_row = embed_ast_id_to_row_map[ast_id]
-    print 'printing program sequence for hoc {} and ast id {}'.format(hoc_num, ast_id)
-    
-    block_string_to_row_map = pickle.load(open(BLOCK_STRING_TO_BLOCK_ROW_MAP, "rb" ))
-    block_row_to_string_map = {v: k for k, v in block_string_to_row_map.items()}
-    ast_mat = np.load(BLOCK_MAT_PREFIX + hoc_num + BLOCK_LIMIT_TIMESTEPS +  MAT_SUFFIX)
-    num_asts, max_ast_len, num_blocks = ast_mat.shape
-    program = []
-    for t in xrange(max_ast_len):
-        block_row = np.argmax(ast_mat[ast_row,t,:])
-        block_string = block_row_to_string_map[block_row]
-        program.append(block_string)
-    print "dimension num_blocks {}".format(num_blocks)
-    print program
-
-def convert_to_block_strings(mat_with_block_rows):
-    num_samples,  num_timesteps  = mat_with_block_rows.shape
-    block_string_to_row_map = pickle.load(open(BLOCK_STRING_TO_BLOCK_ROW_MAP, "rb" ))
-    block_row_to_string_map = {v: k for k, v in block_string_to_row_map.items()}
-    mat_with_block_strings = np.empty((num_samples, num_timesteps), dtype=object)
-    for i in xrange(num_samples):
-        for t in xrange(num_timesteps):
-            block_string = block_row_to_string_map[int(mat_with_block_rows[i,t])]
-            # print block_string
-            mat_with_block_strings[i,t] = block_string
-    return mat_with_block_strings
-
-
-
-
 if __name__ == "__main__":
     print "You are running utils.py directly, so you must be testing it!"
     # load_dataset_predict_block_all_hocs()
     X, y, ast_maps, num_asts = load_dataset_predict_ast(hoc_num=2, data_sz=-1, use_embeddings=False)
     print X.shape
     print y.shape
+    print num_asts
     X, y, ast_maps, num_asts = load_dataset_predict_ast(hoc_num=2, data_sz=-1, use_embeddings=True)
     print X.shape
     print y.shape
-    # for hoc in xrange(1,10):
-    #     print_sample_program(hoc_num=hoc,ast_id=0)
+    print num_asts
+
 

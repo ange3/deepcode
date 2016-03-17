@@ -33,12 +33,15 @@ BLOCK_LIMIT_TIMESTEPS = '_timesteps_20'
 
 # BLOCK IDS ARE THE SAME AS BLOCK ROWS
 BLOCK_STRING_TO_BLOCK_ROW_MAP = '../processed_data/block_level/map_block_string_to_block_id_master.pickle'
-MAT_SUFFIX = '.npy'
-MAP_SUFFIX = '.pickle'
 
-AST_EMBEDDINGS_PREFIX = '../processed_data/embeddings/ast_embeddings_hoc_indiv'
+AST_EMBEDDINGS_PREFIX_STEM = '../processed_data/embeddings/ast_embeddings_hoc_'
+AST_EMBEDDINGS_VARIATION = 'indiv_only_forward'
 EMBED_AST_MAP_PREFIX = '../processed_data/block_level/map_row_index_to_ast_id_'
 
+COUNTS_MAT_PREFIX = '../counts_by_set/deck_'
+
+MAT_SUFFIX = '.npy'
+MAP_SUFFIX = '.pickle'
 # To specify which Hour of Code problems we are taking into account
 # when we iterate over "all" of them. 
 # there are a bunch of hocs we are not including yet, since they are still

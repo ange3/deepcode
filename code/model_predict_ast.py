@@ -46,7 +46,6 @@ def _build_net_layers(num_timesteps, num_asts, hidden_size, learning_rate, embed
                 l_lstm, hidden_size, grad_clipping=grad_clip,
                 nonlinearity=lasagne.nonlinearities.tanh)
 
-
     # The l_forward layer creates an output of dimension (batch_size, num_timesteps, hidden_size)
 
 
@@ -285,19 +284,21 @@ def check_accuracy(data, compute_loss_acc, dataset_name, compute_acc_per_timeste
     print("Testing...")
     # After training, we compute and print the test error:
     if compute_acc_per_timestep_bool:
-        loss, raw_acc, corrected_acc, pred = _compute_loss_acc_pred_per_timestep(X, truth, compute_loss_acc)
+        loss, raw_acc, corrected_acc, corrected_acc_list, pred = _compute_loss_acc_pred_per_timestep(X, truth, compute_loss_acc)
     else:
         loss, raw_acc, corrected_acc, pred = _compute_loss_acc_pred(X, truth, compute_loss_acc)
 
     print("Final results:")
     print("  {} loss:\t\t\t{:.6f}".format(dataset_name, loss * 1.0))
     print("  {} raw accuracy:\t\t{:.2f} %".format(dataset_name, raw_acc * 100))
+    print("  {} corrected accuracy:\t{:.2f} %".format(dataset_name, corrected_acc * 100))
     if compute_acc_per_timestep_bool:
-        print("  {} corrected accuracy".format(dataset_name))
-        for timestep, acc in enumerate(corrected_acc):
+        print("  {} corrected accuracy time series".format(dataset_name))
+        for timestep, acc in enumerate(corrected_acc_list):
             print ("  \t\t Timestep {}:\t{:.2f} %".format(timestep, acc * 100))
+        return loss, raw_acc, corrected_acc, corrected_acc_list, pred
     else:
-        print("  {} corrected accuracy:\t{:.2f} %".format(dataset_name, corrected_acc * 100))
+        return loss, raw_acc, corrected_acc, pred
 
-    return loss, raw_acc, corrected_acc, pred
+    
 
