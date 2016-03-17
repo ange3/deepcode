@@ -99,6 +99,27 @@ def vectorize_data(data_raw):
     # truth = truth[:, 1:]
     return X, next_problem, truth
 
+
+###############################################################################
+# Below utils code for milestone 2: Predict a student's next AST within an HOC.
+###############################################################################
+
+def load_traj_counts(hoc_num):
+  '''
+  Loads txt file with trajectory frequency counts
+
+  Input: hoc_num
+  Output: map {traj_id: count}
+  '''
+  traj_counts = {}
+  traj_count_filepath = TRAJ_COUNT_FILEPATH_PRE + str(hoc_num) + TRAJ_COUNT_FILEPATH_POST
+  with open(traj_count_filepath, 'rb') as f:
+    reader = csv.reader(f, dialect = 'excel' , delimiter = '\t')
+    for row in reader:
+      traj_counts[int(row[0])] = int(row[1])
+  return traj_counts
+
+  
 def prepare_traj_data_for_rnn(raw_matrix):
     """
     inputs: 
@@ -460,67 +481,44 @@ def save_ast_embeddings_for_all_hocs(ast_embeddings, split_indices):
         save_ast_embeddings(ast_embeddings_list[hoc - 1], hoc)
 
 
-# def load_dataset_predict_ast(hoc_num=7, data_sz=-1, use_embeddings=False):
-#     print('Preparing network inputs and targets, and the ast maps...')
-#     hoc_num = str(hoc_num)
-#     data_set = 'hoc' + hoc_num
-#     # if DATA_SZ = -1, use entire data set
-#     # For DATA_SZ, powers of 2 work best for performance.
-#     ast_map_file = TRAJ_AST_MAP_PREFIX + hoc_num + MAP_SUFFIX
+# def weight_traj_mat_by_counts(traj_mat, traj_counts):
 
-#     # Load AST ID to Row Map
-#     ast_id_to_row_map = pickle.load(open( ast_map_file, "rb" ))
-#     # Create Row to AST ID Map by inverting the previous one
-#     row_to_ast_id_map = {v: k for k, v in ast_id_to_row_map.items()}
-#     # trajectories matrix for a single hoc exercise
-#     # shape (num_traj, max_traj_len, num_asts)
-#     # Note that ast_index = 0 corresponds to the <END> token,
-#     # marking that the student has already finished.
-#     # The <END> token does not correspond to an AST.
-
-#     traj_mat_file = TRAJ_MAP_PREFIX + hoc_num + MAT_SUFFIX
-#     traj_mat = np.load(traj_mat_file)
-
-#     # if data_sz specified, reduce matrix. 
-#     # Useful to create smaller data sets for testing purposes.
-#     if data_sz != -1:
-#         traj_mat = traj_mat[:data_sz]
-#     print 'Trajectory matrix shape {}'.format(traj_mat.shape)
-
-#     # shuffle the first dimension of the matrix
-#     traj_mat = shuffle(traj_mat, random_state=0)
-
-#     num_traj, max_traj_len, num_asts = traj_mat.shape
-#     # Split data into train, val, test
-#     # TODO: Replace with kfold validation in the future
-#     # perhaps we can use sklearn kfold?
-#     train_mat = traj_mat[0:7*num_traj/8,:]
-#     val_mat =  traj_mat[7*num_traj/8: 15*num_traj/16 ,:]
-#     test_mat = traj_mat[15*num_traj/16:num_traj,:]
-
-#     train_data = prepare_traj_data_for_rnn(train_mat)
-#     val_data = prepare_traj_data_for_rnn(val_mat)
-#     test_data = prepare_traj_data_for_rnn(test_mat)
+def print_timestep_accuracies(avg_acc, acc_per_timestep_list):
+  '''
+  Print accuracies over multiple timesteps
+  '''
+  print '\tAverage Accuracy: {:.2f}%'.format(avg_acc*100)
+  print '\tTimestep Accuracies:'
+  for t, timestep_acc in enumerate(acc_per_timestep_list):
+    print '\t\tTimestep: {}, Accuracy: {:.2f}%'.format(t, timestep_acc*100)
 
 
-#     X_train, y_train = train_data
-#     X_val, y_val = val_data
-#     X_test, y_test = test_data
-#     print 'X_train shape {}'.format(X_train.shape)
-#     print 'y_train shape {}'.format(y_train.shape)
-#     print 'X_val shape {}'.format(X_val.shape)
-#     print 'X_test shape {}'.format(X_test.shape)
-#     num_train, num_timesteps, num_asts = X_train.shape
+def print_accuracies(hoc_num, train_acc_map, val_acc_map, test_acc_map):
+  '''
+  Input:  hoc_num is an int representing hour of code problem number
+          train_acc_map is a map {hoc_num: (train_acc, train_acc_list)} 
+              where train_acc is a single float value (average accuracy over all timesteps)
+                    train_acc_list is a list of accuracy values at every timestep
+          val_acc_map {hoc_num: (val_acc, val_acc_list)}
+          test_acc_map {hoc_num: (test_acc, test_acc_list)}
 
-#     # print y_train[:10]
-#     # print X_train[:10,:, :10]
+  No output
+  '''
+  print '*' * 15
+  print 'HOC: {}'.format(str(hoc_num))
 
-#     X_train_ast_ids, y_train_ast_ids = convert_data_to_ast_ids(train_data, row_to_ast_id_map)
-#     # print X_train_ast_ids[:10]
-#     # print y_train_ast_ids[:10]
-#     print 'num_timesteps {}'.format(num_timesteps)
-#     print ("Inputs and targets done!")
-#     return train_data, val_data, test_data, ast_id_to_row_map, row_to_ast_id_map, num_timesteps, num_asts
+  train_acc, train_acc_list = train_acc_map[hoc_num]
+  val_acc, val_acc_list = val_acc_map[hoc_num]
+  test_acc, test_acc_list = test_acc_map[hoc_num]
+
+  print 'Training Accuracies:'
+  print_timestep_accuracies(train_acc, train_acc_list)  
+
+  print '\n\nVal Accuracies:'
+  print_timestep_accuracies(val_acc, val_acc_list) 
+
+  print '\n\nTest Accuracies:' 
+  print_timestep_accuracies(test_acc, test_acc_list) 
 
 if __name__ == "__main__":
     print "You are running utils.py directly, so you must be testing it!"

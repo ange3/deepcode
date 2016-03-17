@@ -35,6 +35,7 @@ processed_data_asts
 *.npy
 loss_plots
 saved_models
+baseline_results
 
 # OS generated files #
 ######################

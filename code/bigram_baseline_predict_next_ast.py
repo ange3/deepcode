@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# File: utils.py
-# @Author: Angela Sy
+# File: bigram_baseline_predict_next_ast.py
+# @Author: Angela Sy, Lisa Wang
 # @created: Feb 26 2016
 #
 #==============================================================================
@@ -26,7 +26,7 @@
 # CURRENT STATUS: Complete
 #==============================================================================
 # USAGE: 
-# From command line, run  python bigram_baseline_predict_next_ast.py
+# From command line, run python bigram_baseline_predict_next_ast.py
 #==============================================================================
 #
 ###############################################################################
@@ -42,39 +42,15 @@ import pickle
 import operator
 
 # our own modules
-from utils import *
+import utils
 from visualize import *
-# from model_predict_ast import compute_accuracy_given_data_and_predictions
-from model_predict_ast import compute_corrected_acc_on_ast_rows_per_timestep
+from constants import *
+from model_predict_ast import compute_accuracy_given_data_and_predictions
+# from model_predict_ast import compute_corrected_acc_on_ast_rows_per_timestep
 
 
-END_TOKEN_AST_ID = '-1'
 
-TRAJ_COUNT_FILEPATH_PRE = '../data/trajectory_count_files/counts_'
-TRAJ_COUNT_FILEPATH_POST = '.txt'
-
-TRAJ_ROW_MAP_FILEPATH_PRE = '../processed_data/map_traj_row_'
-TRAJ_ROW_MAP_FILEPATH_POST = '.pickle'
-
-AST_ROW_MAP_FILEPATH_PRE = '../processed_data/ast_id_level/map_ast_row_'
-AST_ROW_MAP_FILEPATH_POST = '.pickle'
-
-def load_traj_counts(hoc_num):
-  '''
-  Loads txt file with trajectory frequency counts
-
-  Input: hoc_num
-  Output: map {traj_id: count}
-  '''
-  traj_counts = {}
-  traj_count_filepath = TRAJ_COUNT_FILEPATH_PRE + str(hoc_num) + TRAJ_COUNT_FILEPATH_POST
-  with open(traj_count_filepath, 'rb') as f:
-    reader = csv.reader(f, dialect = 'excel' , delimiter = '\t')
-    for row in reader:
-      traj_counts[int(row[0])] = int(row[1])
-  return traj_counts
-
-def count_bigrams(x, hoc_num, using_weighted_traj_counts):
+def count_bigrams(x, hoc_num, using_weighted_traj_counts=False):
   '''
   Input: x matrix (num_trajectories, num_timesteps, num_asts)
   Output: Map { AST ID: {every other AST ID: count} }
@@ -86,7 +62,7 @@ def count_bigrams(x, hoc_num, using_weighted_traj_counts):
   traj_count_weight = 1
   if using_weighted_traj_counts:
     map_traj_row_to_id = pickle.load(open(TRAJ_ROW_MAP_FILEPATH_PRE + str(hoc_num) + TRAJ_ROW_MAP_FILEPATH_POST, 'rb'))
-    traj_count_map = load_traj_counts(hoc_num)
+    traj_count_map = utils.load_traj_counts(hoc_num)
 
   bigram_count_map = {}
   for n in xrange(num_trajectories):
@@ -181,48 +157,10 @@ def compute_accuracy(x, y, bigram_map, using_bigrams):
     prediction = make_bigram_predictions(x, bigram_map)
   else:
     prediction = make_gold_predictions(x, hoc_num)
-  acc = 0
-  acc_list = compute_corrected_acc_on_ast_rows_per_timestep(x, y, prediction)
-  # acc, acc_list = compute_accuracy_given_data_and_predictions(x, y, prediction, compute_acc_per_timestep_bool=True)
+  # acc = 0
+  # acc_list = compute_corrected_acc_on_ast_rows_per_timestep(x, y, prediction)
+  acc, acc_list = compute_accuracy_given_data_and_predictions(x, y, prediction, compute_acc_per_timestep_bool=True)
   return acc, acc_list
-
-def print_timestep_accuracies(avg_acc, acc_per_timestep_list):
-  '''
-  Print accuracies over multiple timesteps
-  '''
-  print '\tAverage Accuracy: {:.2f}%'.format(avg_acc*100)
-  print '\tTimestep Accuracies:'
-  for t, timestep_acc in enumerate(acc_per_timestep_list):
-    print '\t\tTimestep: {}, Accuracy: {:.2f}%'.format(t, timestep_acc*100)
-
-
-def print_accuracies(hoc_num, train_acc_map, val_acc_map, test_acc_map):
-  '''
-  Input:  hoc_num is an int representing hour of code problem number
-          train_acc_map is a map {hoc_num: (train_acc, train_acc_list)} 
-              where train_acc is a single float value (average accuracy over all timesteps)
-                    train_acc_list is a list of accuracy values at every timestep
-          val_acc_map {hoc_num: (val_acc, val_acc_list)}
-          test_acc_map {hoc_num: (test_acc, test_acc_list)}
-
-  No output
-  '''
-  print '*' * 15
-  print 'HOC: {}'.format(str(hoc_num))
-
-  train_acc, train_acc_list = train_acc_map[hoc_num]
-  val_acc, val_acc_list = val_acc_map[hoc_num]
-  test_acc, test_acc_list = test_acc_map[hoc_num]
-
-  print 'Training Accuracies:'
-  print_timestep_accuracies(train_acc, train_acc_list)  
-
-  print '\n\nVal Accuracies:'
-  print_timestep_accuracies(val_acc, val_acc_list) 
-
-  print '\n\nTest Accuracies:' 
-  print_timestep_accuracies(test_acc, test_acc_list) 
-
 
 
 if __name__ == "__main__":
@@ -240,17 +178,21 @@ if __name__ == "__main__":
   '''
 
   START_HOC = 1
-  END_HOC = 1
+  END_HOC = 9
 
   USING_BIGRAMS = True  # using bigrams or gold prediction
-  USING_WEIGHTED_TRAJ_COUNTS = True  # computing bigrams using weighted trajectories or unweighted
+  USING_WEIGHTED_TRAJ_COUNTS = False  # computing bigrams using weighted trajectories or unweighted
 
   train_acc_map, val_acc_map, test_acc_map = {}, {}, {}
 
   for hoc_num in xrange(START_HOC, END_HOC+1):
     print 'Loading data for HOC {}...'.format(str(hoc_num))
-    train_data, val_data, test_data, ast_id_to_row_map, row_to_ast_id_map, num_timesteps, num_asts =load_dataset_predict_ast(hoc_num)
+    # train_data, val_data, test_data, ast_id_to_row_map, row_to_ast_id_map, num_timesteps, num_asts =load_dataset_predict_ast(hoc_num)
+    X, y, ast_maps, num_asts = utils.load_dataset_predict_ast(hoc_num)
+    train_data, val_data, test_data = utils.get_train_val_test_split((X, y))
     x_train, y_train = train_data
+    print 'Sanity check, first values of x_train:'
+    print x_train[:5,:5,:5]
     if USING_BIGRAMS:
       print 'INFO: Predicting using bigrams'
       bigram_map = create_bigram_mapping(x_train, hoc_num, USING_WEIGHTED_TRAJ_COUNTS)
@@ -275,9 +217,9 @@ if __name__ == "__main__":
   print 'HOC numbers:', START_HOC, ' to ', END_HOC
   print 'Bigram Accuracies:'
   for hoc_num in xrange(START_HOC, END_HOC+1):
-    print_accuracies(hoc_num, train_acc_map, val_acc_map, test_acc_map)
+    utils.print_accuracies(hoc_num, train_acc_map, val_acc_map, test_acc_map)
 
-  filename = 'baseline_results/bigram_acc_per_timestep_train_test_val_maps.pickle'
+  filename = '../baseline_results/bigram_acc_per_timestep_train_test_val_maps.pickle'
   pickle.dump((train_acc_map, val_acc_map, test_acc_map), open (filename, 'wb'))
   print '-- SAVING'
   print filename

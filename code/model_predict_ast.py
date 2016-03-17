@@ -242,13 +242,14 @@ def compute_corrected_acc_on_ast_rows_per_timestep(X, truth, pred):
                     correct_count += 1
                 timestep_accuracies[t] = (correct_count, total_count)
     
-    print timestep_accuracies
+    print "correct and total counts from timestep_accuracies: {}".format(timestep_accuracies)
     # Calculate corrected accuracies
     corrected_acc_list = []
     for acc_for_timestep in timestep_accuracies:
         correct_count, total_count = acc_for_timestep
+        # print ('correct count: {} \ttotal count: {}'.format(correct_count, total_count))
         if total_count == 0:
-            corrected_acc = 0
+            corrected_acc = -1.
         else:
             corrected_acc = correct_count/float(total_count)
         corrected_acc_list.append(corrected_acc)

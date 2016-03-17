@@ -40,6 +40,21 @@ EMBED_AST_MAP_PREFIX = '../processed_data/block_level/map_row_index_to_ast_id_'
 
 COUNTS_MAT_PREFIX = '../counts_by_set/deck_'
 
+
+END_TOKEN_AST_ID = '-1'
+
+TRAJ_COUNT_FILEPATH_PRE = '../data/trajectory_count_files/counts_'
+TRAJ_COUNT_FILEPATH_POST = '.txt'
+
+TRAJ_ROW_MAP_FILEPATH_PRE = '../processed_data/map_traj_row_'
+TRAJ_ROW_MAP_FILEPATH_POST = '.pickle'
+
+AST_ROW_MAP_FILEPATH_PRE = '../processed_data/ast_id_level/map_ast_row_'
+AST_ROW_MAP_FILEPATH_POST = '.pickle'
+
+
+
+
 MAT_SUFFIX = '.npy'
 MAP_SUFFIX = '.pickle'
 # To specify which Hour of Code problems we are taking into account
