@@ -329,7 +329,38 @@ def get_train_val_test_split(data, split=(float(7)/8, float(1)/16, float(1)/16))
 
     return train_data, val_data, test_data
 
+def load_traj_id_to_row_map(hoc_num):
+    traj_row_to_id_map = pickle.load(open(TRAJ_ROW_MAP_FILEPATH_PRE + str(hoc_num) + MAP_SUFFIX, "rb"))
+    print traj_row_to_id_map.items()[:20]
+    traj_id_to_row_map = {v: k for k, v in traj_row_to_id_map.items()}
+    # traj_id_to_row_map = pickle.load(open(TRAJ_ROW_MAP_FILEPATH_PRE + str(hoc_num) + MAP_SUFFIX, "rb"))
+    return traj_id_to_row_map
 
+def weight_traj_mat_by_counts(hoc_num, traj_mat):
+    # deck is a list with trajectory IDs
+    deck = np.load(DECK_MAT_PREFIX + str(hoc_num) + MAT_SUFFIX)
+    deck = np.array([int(val) for val in deck])
+    print 'deck shape: {}'.format(deck.shape)
+    print deck[:10]
+
+    traj_id_to_row_map = load_traj_id_to_row_map(hoc_num)
+    # print traj_id_to_row_map.items()
+    print traj_id_to_row_map[0]
+
+
+    deck_row_id = np.array([traj_id_to_row_map[traj_id] for traj_id in deck])
+
+    total_samples = len(deck) # should be equal to the number of total students
+    print 'total in deck: {}'.format(total_samples)
+    highest_row = np.max(deck)
+    print 'highest row in deck: {}'.format(highest_row)
+    num_traj, num_timesteps, num_asts = traj_mat.shape
+    print 'number of distinct trajectories: {}'.format(num_traj)
+    weighted_shuffled_traj_mat = np.zeros((total_samples, num_timesteps, num_asts))
+    for i, traj_row in enumerate(deck):
+        weighted_shuffled_traj_mat[i] = traj_mat[int(traj_row)]
+
+    return weighted_shuffled_traj_mat
 
 def load_dataset_predict_ast(hoc_num=2, data_sz=-1, use_embeddings=False):
     '''
@@ -379,8 +410,8 @@ def load_dataset_predict_ast(hoc_num=2, data_sz=-1, use_embeddings=False):
         embed_ast_id_to_row_map = {v: k for k, v in embed_row_to_ast_id_map.items()}
 
         ast_maps = {
-            'traj_id_to_row': traj_ast_id_to_row_map,
-            'traj_row_to_id' : traj_row_to_ast_id_map,
+            'traj_ast_id_to_row': traj_ast_id_to_row_map,
+            'traj_row_to_ast_id' : traj_row_to_ast_id_map,
             'embed_id_to_row' : embed_ast_id_to_row_map,
             'embed_row_to_id' : embed_row_to_ast_id_map,
         }
@@ -481,55 +512,64 @@ def save_ast_embeddings_for_all_hocs(ast_embeddings, split_indices):
         save_ast_embeddings(ast_embeddings_list[hoc - 1], hoc)
 
 
-# def weight_traj_mat_by_counts(traj_mat, traj_counts):
 
 def print_timestep_accuracies(avg_acc, acc_per_timestep_list):
-  '''
-  Print accuracies over multiple timesteps
-  '''
-  print '\tAverage Accuracy: {:.2f}%'.format(avg_acc*100)
-  print '\tTimestep Accuracies:'
-  for t, timestep_acc in enumerate(acc_per_timestep_list):
-    print '\t\tTimestep: {}, Accuracy: {:.2f}%'.format(t, timestep_acc*100)
+    '''
+    Print accuracies over multiple timesteps
+    '''
+    print '\tAverage Accuracy: {:.2f}%'.format(avg_acc*100)
+    print '\tTimestep Accuracies:'
+    for t, timestep_acc in enumerate(acc_per_timestep_list):
+        print '\t\tTimestep: {}, Accuracy: {:.2f}%'.format(t, timestep_acc*100)
 
 
 def print_accuracies(hoc_num, train_acc_map, val_acc_map, test_acc_map):
-  '''
-  Input:  hoc_num is an int representing hour of code problem number
+    '''
+    Input:  hoc_num is an int representing hour of code problem number
           train_acc_map is a map {hoc_num: (train_acc, train_acc_list)} 
               where train_acc is a single float value (average accuracy over all timesteps)
                     train_acc_list is a list of accuracy values at every timestep
           val_acc_map {hoc_num: (val_acc, val_acc_list)}
           test_acc_map {hoc_num: (test_acc, test_acc_list)}
 
-  No output
-  '''
-  print '*' * 15
-  print 'HOC: {}'.format(str(hoc_num))
+    No output
+    '''
+    print '*' * 15
+    print 'HOC: {}'.format(str(hoc_num))
 
-  train_acc, train_acc_list = train_acc_map[hoc_num]
-  val_acc, val_acc_list = val_acc_map[hoc_num]
-  test_acc, test_acc_list = test_acc_map[hoc_num]
+    train_acc, train_acc_list = train_acc_map[hoc_num]
+    val_acc, val_acc_list = val_acc_map[hoc_num]
+    test_acc, test_acc_list = test_acc_map[hoc_num]
 
-  print 'Training Accuracies:'
-  print_timestep_accuracies(train_acc, train_acc_list)  
+    print 'Training Accuracies:'
+    print_timestep_accuracies(train_acc, train_acc_list)  
 
-  print '\n\nVal Accuracies:'
-  print_timestep_accuracies(val_acc, val_acc_list) 
+    print '\n\nVal Accuracies:'
+    print_timestep_accuracies(val_acc, val_acc_list) 
 
-  print '\n\nTest Accuracies:' 
-  print_timestep_accuracies(test_acc, test_acc_list) 
+    print '\n\nTest Accuracies:' 
+    print_timestep_accuracies(test_acc, test_acc_list) 
 
 if __name__ == "__main__":
     print "You are running utils.py directly, so you must be testing it!"
+    hoc_num = 2
+
+    # X, y, ast_maps, num_asts = load_dataset_predict_ast(hoc_num=2, data_sz=-1, use_embeddings=False)
+    # convert_data_to_ast_ids((X,y), ast_maps['traj_row_to_ast_id'])
+    
+    traj_mat = np.load(TRAJ_MAP_PREFIX + str(hoc_num) + MAT_SUFFIX)
+    print 'traj_mat shape {}'.format(traj_mat.shape)
+    deck_mat = weight_traj_mat_by_counts(hoc_num, traj_mat)
+    print 'deck_mat shape {}'.format(deck_mat.shape)
+
     # load_dataset_predict_block_all_hocs()
-    X, y, ast_maps, num_asts = load_dataset_predict_ast(hoc_num=2, data_sz=-1, use_embeddings=False)
-    print X.shape
-    print y.shape
-    print num_asts
-    X, y, ast_maps, num_asts = load_dataset_predict_ast(hoc_num=2, data_sz=-1, use_embeddings=True)
-    print X.shape
-    print y.shape
-    print num_asts
+    # X, y, ast_maps, num_asts = load_dataset_predict_ast(hoc_num=2, data_sz=-1, use_embeddings=False)
+    # print X.shape
+    # print y.shape
+    # print num_asts
+    # X, y, ast_maps, num_asts = load_dataset_predict_ast(hoc_num=2, data_sz=-1, use_embeddings=True)
+    # print X.shape
+    # print y.shape
+    # print num_asts
 
 
