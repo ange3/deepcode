@@ -1,0 +1,144 @@
+hoc1:
+training loss:		0.728723
+  training raw accuracy:		78.60 %
+  training corrected acc:		52.57 %
+  validation loss:		0.881266
+  validation raw accuracy:		75.90 %
+  validation corrected acc:		48.72 % 
+
+Training completed.
+Testing...
+Final results:
+  test loss:			0.941377
+  test raw accuracy:		74.10 %
+  test corrected accuracy:	45.57 %
+  
+=============================================================
+hoc2:
+training loss:		0.643932
+  training raw accuracy:		81.74 %
+  training corrected acc:		56.75 %
+  validation loss:		0.788131
+  validation raw accuracy:		79.07 %
+  validation corrected acc:		50.00 % 
+
+Training completed.
+Testing...
+Final results:
+  test loss:			0.816647
+  test raw accuracy:		80.46 %
+  test corrected accuracy:	53.54 %
+ 
+=============================================================
+hoc3:
+training loss:		0.904659
+  training raw accuracy:		73.56 %
+  training corrected acc:		56.70 %
+  validation loss:		1.050364
+  validation raw accuracy:		71.18 %
+  validation corrected acc:		54.16 % 
+
+Training completed.
+Testing...
+Final results:
+  test loss:			1.032675
+  test raw accuracy:		71.34 %
+  test corrected accuracy:	53.64 %
+  
+=============================================================
+hoc4:
+ training loss:		0.689540
+  training raw accuracy:		80.05 %
+  training corrected acc:		57.45 %
+  validation loss:		0.771178
+  validation raw accuracy:		79.10 %
+  validation corrected acc:		54.63 % 
+
+Training completed.
+Testing...
+Final results:
+  test loss:			0.811294
+  test raw accuracy:		78.82 %
+  test corrected accuracy:	54.78 %
+ 
+=============================================================
+hoc5:
+training loss:		0.534338
+  training raw accuracy:		85.94 %
+  training corrected acc:		61.11 %
+  validation loss:		0.664540
+  validation raw accuracy:		84.90 %
+  validation corrected acc:		59.24 % 
+
+Training completed.
+Testing...
+Final results:
+  test loss:			0.648894
+  test raw accuracy:		84.91 %
+  test corrected accuracy:	57.54 %
+
+=============================================================
+hoc6:
+ training loss:		0.779871
+  training raw accuracy:		79.31 %
+  training corrected acc:		60.01 %
+  validation loss:		0.970969
+  validation raw accuracy:		79.58 %
+  validation corrected acc:		56.83 % 
+
+Training completed.
+Testing...
+Final results:
+  test loss:			1.007939
+  test raw accuracy:		77.29 %
+  test corrected accuracy:	57.09 %
+  
+=============================================================
+ hoc7:
+ 
+ training loss:		0.861287
+  training raw accuracy:		76.93 %
+  training corrected acc:		54.79 %
+  validation loss:		1.105703
+  validation raw accuracy:		75.06 %
+  validation corrected acc:		52.66 % 
+
+Training completed.
+Testing...
+Final results:
+  test loss:			1.145852
+  test raw accuracy:		73.76 %
+  test corrected accuracy:	51.64 %
+  
+=============================================================
+hoc8:
+
+training loss:		0.943938
+  training raw accuracy:		75.81 %
+  training corrected acc:		58.37 %
+  validation loss:		1.341963
+  validation raw accuracy:		71.50 %
+  validation corrected acc:		50.61 % 
+
+Training completed.
+Testing...
+Final results:
+  test loss:			1.309853
+  test raw accuracy:		72.57 %
+  test corrected accuracy:	51.58 %
+
+=============================================================
+hoc9:
+training loss:		0.930470
+  training raw accuracy:		78.43 %
+  training corrected acc:		60.58 %
+  validation loss:		1.389300
+  validation raw accuracy:		74.10 %
+  validation corrected acc:		51.72 % 
+
+Training completed.
+Testing...
+Final results:
+  test loss:			1.411608
+  test raw accuracy:		75.41 %
+  test corrected accuracy:	54.44 %

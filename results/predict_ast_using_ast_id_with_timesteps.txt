@@ -1,0 +1,45 @@
+Accuracies for HOC 1:
+last train acc: 53.57 %
+last val acc: 46.02 %
+overall test acc: 47.01 %
+test accs time series: [0.24096385542168675, 0.3815789473684211, 0.7547169811320755, 0.9473684210526315, 1.0, -1.0]
+Accuracies for HOC 2:
+last train acc: 56.73 %
+last val acc: 52.61 %
+overall test acc: 53.59 %
+test accs time series: [0.1597222222222222, 0.5481481481481482, 0.8736842105263158, 1.0, 1.0, -1.0, -1.0]
+Accuracies for HOC 3:
+last train acc: 53.33 %
+last val acc: 52.58 %
+overall test acc: 52.56 %
+test accs time series: [0.21223021582733814, 0.3258426966292135, 0.6919831223628692, 0.8875, 0.9871794871794872, 1.0]
+Accuracies for HOC 4:
+last train acc: 54.10 %
+last val acc: 55.37 %
+overall test acc: 53.43 %
+test accs time series: [0.18333333333333332, 0.4067796610169492, 0.6677018633540373, 0.8551401869158879, 0.9797979797979798, 1.0, 1.0, 1.0]
+Accuracies for HOC 5:
+last train acc: 62.18 %
+last val acc: 55.31 %
+overall test acc: 56.51 %
+test accs time series: [0.17647058823529413, 0.48514851485148514, 0.7686567164179104, 0.9357798165137615, 0.9545454545454546, 0.875, 0.25, 1.0, 1.0, -1.0]
+Accuracies for HOC 6:
+last train acc: 57.14 %
+last val acc: 55.74 %
+overall test acc: 54.81 %
+test accs time series: [0.3333333333333333, 0.5949367088607594, 0.7608695652173914, 0.9411764705882353, 1.0]
+Accuracies for HOC 7:
+last train acc: 56.38 %
+last val acc: 52.02 %
+overall test acc: 50.49 %
+test accs time series: [0.19771863117870722, 0.4880952380952381, 0.7166666666666667, 0.8735632183908046, 1.0, 1.0]
+Accuracies for HOC 8:
+last train acc: 62.37 %
+last val acc: 50.00 %
+overall test acc: 52.63 %
+test accs time series: [0.2119700748129676, 0.5162162162162162, 0.8226415094339623, 0.9333333333333333, 0.95]
+Accuracies for HOC 9:
+last train acc: 61.96 %
+last val acc: 53.65 %
+overall test acc: 51.42 %
+test accs time series: [0.15304798962386512, 0.5575221238938053, 0.8613445378151261, 0.9620253164556962, 0.9655172413793104]
