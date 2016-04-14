@@ -26,6 +26,7 @@
 *.sql
 *.sqlite
 *.pyc
+*.idea
 
 # Data #
 ########
@@ -51,3 +52,4 @@ code/.ipynb_checkpoints*
 # Other #
 #########
 studentSimulator
+venv

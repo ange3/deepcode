@@ -550,6 +550,16 @@ def print_accuracies(hoc_num, train_acc_map, val_acc_map, test_acc_map):
     print '\n\nTest Accuracies:' 
     print_timestep_accuracies(test_acc, test_acc_list) 
 
+def smoothen_data(data, smooth_window=100):
+    smooth = []
+    for i in xrange(len(data)-smooth_window):
+        smooth.append(np.mean(data[i:i+smooth_window]))
+
+    for i in xrange(len(data)-smooth_window, len(data)):
+        smooth.append(np.mean(data[i:len(data)]))
+    return smooth
+
+
 if __name__ == "__main__":
     print "You are running utils.py directly, so you must be testing it!"
     hoc_num = 2

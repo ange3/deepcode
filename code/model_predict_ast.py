@@ -257,7 +257,15 @@ def compute_corrected_acc_on_ast_rows_per_timestep(X, truth, pred):
     return corrected_acc_list
 
 
-def compute_corrected_acc_on_ast_ids(X_ast_ids, truth_ast_ids, pred_ast_ids): 
+def compute_corrected_acc_on_ast_ids(X_ast_ids, truth_ast_ids, pred_ast_ids):
+    """
+    This function is currently not being used, but if the X matrix is storing
+    AST Ids directly, it can be used to compute the corrected accuracy.
+    :param X_ast_ids:
+    :param truth_ast_ids:
+    :param pred_ast_ids:
+    :return: corrected accuracy
+    """
     batchsize, num_timesteps = X_ast_ids.shape
     correct_count = 0
     total_count = 0
@@ -271,7 +279,16 @@ def compute_corrected_acc_on_ast_ids(X_ast_ids, truth_ast_ids, pred_ast_ids):
     corrected_acc = correct_count/float(total_count)
     return corrected_acc
 
+
 def compute_accuracy_given_data_and_predictions(X, truth, pred, compute_acc_per_timestep_bool=False):
+    """
+    Wrapper function for compute_corrected_accuracy functions. Only this function should be called externally.
+    :param X:
+    :param truth:
+    :param pred:
+    :param compute_acc_per_timestep_bool:
+    :return:
+    """
     corrected_acc = compute_corrected_acc_on_ast_rows(X, truth, pred)
     if compute_acc_per_timestep_bool:
         corrected_acc_list = compute_corrected_acc_on_ast_rows_per_timestep(X, truth, pred)
